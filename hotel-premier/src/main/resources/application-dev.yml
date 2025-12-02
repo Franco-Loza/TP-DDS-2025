@@ -21,12 +21,6 @@ spring:
     hibernate:
       ddl-auto: validate
 
-  # Los datos iniciales se cargan desde PostgreSQL init.sql
-  # No se ejecuta data.sql en cada arranque de la aplicación
-  sql:
-    init:
-      mode: never
-
   # Configuración de Spring Security (solo para desarrollo)
   security:
     user:
