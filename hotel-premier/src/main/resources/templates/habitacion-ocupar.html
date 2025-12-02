@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ocupar Habitación - Selección de Huéspedes</title>
+    <style>
+        /* --- ESTILOS GENERALES Y LAYOUT --- */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        .body {
+            padding: 30px;
+        }
+        .search-box {
+            background: #f1f3f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* --- BOTONES --- */
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; color: white; transition: background 0.2s; }
+        .btn-primary { background: #667eea; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-add { background: #17a2b8; color: white; }
+        .btn-add:hover { background: #138496; }
+
+        /* --- LISTAS --- */
+        .lists-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .list-box { border: 1px solid #ddd; border-radius: 4px; padding: 10px; min-height: 150px; background: #fff; }
+        .list-header { font-weight: bold; margin-bottom: 10px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .selected-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid transparent; }
+
+        /* --- TABLA --- */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8f9fa; color: #444; }
+        tr:hover { background-color: #f8f9fa; }
+
+        /* --- MODALES --- */
+        .confirmation-dialog {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none; justify-content: center; align-items: center;
+            z-index: 10000;
+        }
+        .confirmation-dialog.active { display: flex; }
+
+        .confirmation-content {
+            background: white; border-radius: 8px; padding: 30px;
+            max-width: 500px; width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); text-align: center;
+        }
+
+        /* Modal Éxito */
+        .success-dialog { background-color: #d4edda; border: 2px solid #28a745; }
+        .success-dialog h3 { color: #155724; margin: 0 0 15px 0; font-size: 24px; }
+        .success-dialog p { color: #155724; font-weight: 500; font-size: 16px; margin-bottom: 20px; }
+
+        /* Modal Error */
+        .error-dialog { background-color: #f8d7da; border: 2px solid #dc3545; }
+        .error-dialog h3 { color: #721c24; margin: 0 0 15px 0; font-size: 24px; }
+        .error-dialog p { color: #721c24; font-weight: 500; font-size: 16px; margin-bottom: 20px; }
+
+        .confirmation-buttons { display: flex; justify-content: center; gap: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>OCUPAR HABITACIÓN</h2>
+        <p id="infoHabitacion" style="color: #666; font-size: 0.9em; margin-top: 5px;"></p>
+    </div>
+
+    <div class="body">
+        <div class="search-box">
+            <h3 style="margin-top:0; color: #444;">Buscar Personas</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="busquedaApellido" placeholder="Apellido" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <input type="text" id="busquedaNombre" placeholder="Nombre" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <input type="text" id="busquedaDoc" placeholder="Documento" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" maxlength="15">
+
+                <button class="btn btn-primary" onclick="buscarHuespedes()">BUSCAR</button>
+            </div>
+
+            <div class="table-container">
+                <table id="tablaResultados">
+                    <thead><tr><th>Apellido</th><th>Nombre</th><th>Documento</th><th>Acción</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="lists-container">
+            <div class="list-box" id="boxResponsable">
+                <div class="list-header">RESPONSABLE (Titular)</div>
+                <div id="responsableSeleccionado" style="color: #999; font-style: italic; padding: 10px;">Ninguno seleccionado</div>
+            </div>
+
+            <div class="list-box" id="boxAcompanantes">
+                <div class="list-header">ACOMPAÑANTES</div>
+                <div id="listaAcompanantes"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: right; border-top: 1px solid #eee; padding-top: 20px;">
+            <button class="btn btn-secondary" onclick="window.history.back()" style="margin-right: 10px;">CANCELAR</button>
+
+            <button class="btn btn-success" onclick="confirmarOcupacion()">ACEPTAR</button>
+        </div>
+
+        <div id="errorDialog" class="confirmation-dialog">
+            <div class="confirmation-content error-dialog">
+                <h3>⚠️ Atención</h3>
+                <p id="textoError">Error desconocido</p>
+                <div class="confirmation-buttons">
+                    <button type="button" class="btn btn-danger" onclick="cerrarModalError()">ENTENDIDO</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="successDialog" class="confirmation-dialog">
+    <div class="confirmation-content success-dialog" style="max-width: 500px;">
+        <h3>¡Operación Exitosa!</h3>
+        <p>La ocupación se ha registrado correctamente.</p>
+
+        <div class="confirmation-buttons" style="flex-direction: column; gap: 15px; margin-top: 20px;">
+            <button type="button" class="btn btn-success" onclick="accionSeguirCargando()">
+                SEGUIR CARGANDO
+            </button>
+
+            <button type="button" class="btn btn-primary" onclick="accionCargarOtra()">
+                CARGAR OTRA HABITACIÓN
+            </button>
+
+            <button type="button" class="btn btn-secondary" onclick="accionSalir()">
+                SALIR
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. Inicialización y Event Listeners ---
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validaciones de input
+        ['busquedaApellido', 'busquedaNombre'].forEach(id => {
+            const input = document.getElementById(id);
+            input.addEventListener('input', function() {
+                let valorLimpio = this.value.replace(/[^a-zA-ZñÑáéíóúÁÉÍÓÚ\s]/g, '');
+                this.value = valorLimpio.toUpperCase();
+            });
+        });
+
+        const docInput = document.getElementById('busquedaDoc');
+        docInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+
+    // 2. Recuperar datos de la sesión
+    const ocupacionData = JSON.parse(sessionStorage.getItem('ocupacionData'));
+
+    if (!ocupacionData) {
+        alert("No hay datos de ocupación. Volviendo al menú.");
+        window.location.href = '/menu-principal';
+    }
+
+    document.getElementById('infoHabitacion').textContent =
+        `Habitación: ${ocupacionData.nombreHabitacion} | Desde: ${ocupacionData.fechaIngreso} | Hasta: ${ocupacionData.fechaEgreso}`;
+
+    let responsable = null;
+    let acompanantes = [];
+
+    // --- BÚSQUEDA ---
+    async function buscarHuespedes() {
+        const apellido = document.getElementById('busquedaApellido').value;
+        const nombre = document.getElementById('busquedaNombre').value;
+        const doc = document.getElementById('busquedaDoc').value;
+
+        const params = new URLSearchParams();
+        if(apellido) params.append('apellido', apellido);
+        if(nombre) params.append('nombre', nombre);
+        if(doc) params.append('documento', doc);
+
+        try {
+            const res = await fetch('/api/personas/huesped/buscar?' + params.toString(), { method: 'POST' });
+            if (!res.ok) return;
+
+            const data = await res.json();
+            const tbody = document.querySelector('#tablaResultados tbody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #666;">No se encontraron resultados</td></tr>';
+                return;
+            }
+
+            data.forEach(h => {
+                const jsonString = JSON.stringify(h).replace(/"/g, '&quot;');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                        <td>${h.apellido}</td>
+                        <td>${h.nombre}</td>
+                        <td>${h.documento}</td>
+                        <td>
+                            <button class="btn btn-primary" style="font-size: 0.8em; margin-right:5px;"
+                                    onclick="seleccionarResponsable(${jsonString})">Ser Responsable</button>
+                            <button class="btn btn-add" style="font-size: 0.8em;"
+                                    onclick="agregarAcompanante(${jsonString})">+ Acomp</button>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            console.error(error);
+            mostrarModalError("Error al buscar huéspedes.");
+        }
+    }
+
+    // --- SELECCIÓN ---
+    function seleccionarResponsable(huesped) {
+        if (acompanantes.some(a => a.id === huesped.id)) {
+            mostrarModalError("Esta persona ya está como acompañante.");
+            return;
+        }
+        responsable = huesped;
+        const div = document.getElementById('responsableSeleccionado');
+        div.innerHTML = `
+                <div class="selected-item" style="background: #d1fae5; border-color: #34d399; padding: 10px;">
+                    <div>
+                        <div style="font-weight:bold; color: #065f46;">${huesped.apellido}, ${huesped.nombre}</div>
+                        <div style="font-size: 0.85em; color: #047857;">DNI: ${huesped.documento}</div>
+                    </div>
+                    <button class="btn btn-danger" style="padding: 2px 8px; font-size: 0.7em;"
+                            onclick="quitarResponsable()">X</button>
+                </div>
+            `;
+    }
+
+    function quitarResponsable() {
+        responsable = null;
+        const div = document.getElementById('responsableSeleccionado');
+        div.innerHTML = 'Ninguno seleccionado';
+        div.style.color = '#999';
+        div.style.fontStyle = 'italic';
+        div.style.padding = '10px';
+    }
+
+    function agregarAcompanante(huesped) {
+        if (responsable && responsable.id === huesped.id) {
+            mostrarModalError("Esta persona ya es el Responsable titular.");
+            return;
+        }
+        if (acompanantes.some(a => a.id === huesped.id)) {
+            mostrarModalError("Esta persona ya está agregada.");
+            return;
+        }
+        acompanantes.push(huesped);
+        renderAcompanantes();
+    }
+
+    function renderAcompanantes() {
+        const container = document.getElementById('listaAcompanantes');
+        container.innerHTML = '';
+        acompanantes.forEach((a, index) => {
+            const div = document.createElement('div');
+            div.className = 'selected-item';
+            div.style.cssText = "background: #e0f2f1; border: 1px solid #b2dfdb; padding: 8px;";
+            div.innerHTML = `
+                    <span style="color: #00695c; font-weight: 500;">${a.apellido}, ${a.nombre}</span>
+                    <button class="btn btn-danger" style="padding: 2px 8px; font-size: 0.7em;"
+                            onclick="quitarAcompanante(${index})">X</button>
+                `;
+            container.appendChild(div);
+        });
+    }
+
+    function quitarAcompanante(index) {
+        acompanantes.splice(index, 1);
+        renderAcompanantes();
+    }
+
+    // --- CONFIRMAR OCUPACIÓN (Acción del botón SALIR) ---
+    async function confirmarOcupacion() {
+        if (!responsable) {
+            mostrarModalError("Debe seleccionar un Responsable de Pago (Huésped Titular).");
+            return;
+        }
+
+        const request = {
+            idHabitacion: ocupacionData.idHabitacion,
+            fechaIngreso: ocupacionData.fechaIngreso,
+            fechaEgreso: ocupacionData.fechaEgreso,
+            idResponsable: responsable.id,
+            idsAcompaniantes: acompanantes.map(a => a.id)
+        };
+
+        try {
+            const res = await fetch('/api/estadias/ocupar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(request)
+            });
+
+            if (res.ok) {
+                document.getElementById('successDialog').classList.add('active');
+            } else {
+                const err = await res.json();
+                let mensajeServidor = err.message || "No se pudo registrar la ocupación.";
+                mostrarModalError(mensajeServidor);
+            }
+        } catch (e) {
+            console.error(e);
+            mostrarModalError("Error de conexión con el servidor");
+        }
+    }
+
+    // --- ACCIONES POST-CONFIRMACIÓN ---
+    function accionSeguirCargando() {
+        document.getElementById('successDialog').classList.remove('active');
+    }
+
+    function accionCargarOtra() {
+        sessionStorage.removeItem('ocupacionData');
+        window.location.href = '/habitacion/estado?contexto=ocupar';
+    }
+
+    function accionSalir() {
+        sessionStorage.removeItem('ocupacionData');
+        window.location.href = '/menu-principal';
+    }
+
+    // --- UTILIDADES MODAL ERROR ---
+    function mostrarModalError(mensaje) {
+        document.getElementById('textoError').textContent = mensaje;
+        document.getElementById('errorDialog').classList.add('active');
+    }
+
+    function cerrarModalError() {
+        document.getElementById('errorDialog').classList.remove('active');
+    }
+</script>
+</body>
+</html>

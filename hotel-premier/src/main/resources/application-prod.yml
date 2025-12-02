@@ -1,0 +1,62 @@
+# Configuración para el entorno de producción
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+    hibernate:
+      ddl-auto: validate
+
+# Logging optimizado para producción
+logging:
+  level:
+    root: WARN
+    com.losmergeconflicts.hotelpremier: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+  file:
+    name: logs/hotel-premier-prod.log
+    max-size: 10MB
+    max-history: 30
+
+# Actuator con endpoints limitados en producción
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Configuración del servidor
+server:
+  error:
+    include-stacktrace: never
+    include-exception: false
+    include-message: never
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    max-connections: 8192
+    accept-count: 100
+
+# Configuración de seguridad adicional para producción
+# (Se debe configurar según las necesidades específicas)

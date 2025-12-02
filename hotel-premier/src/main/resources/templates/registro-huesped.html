@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Huésped - Hotel Premier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .navbar-brand img {
+            height: 40px;
+            vertical-align: middle;
+        }
+        
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info {
+            color: #333;
+        }
+        
+        .btn-logout {
+            padding: 8px 20px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .btn-logout:hover {
+            background: #c82333;
+        }
+        
+        .page-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            min-height: calc(100vh - 100px);
+        }
+        
+        .modal-overlay {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 920px;
+            max-height: 90vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            position: relative;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 25px 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .form-grid-full {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .required::after {
+            content: " (*)";
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            padding: 7px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            background: white;
+            text-transform: uppercase;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group input[type="date"] {
+            font-family: inherit;
+        }
+        
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 35px;
+        }
+        
+        .address-grid {
+            display: grid;
+            grid-template-columns: 2fr 0.5fr 0.4fr 0.4fr 0.6fr;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        /* Estilos para el modal de confirmación */
+        .confirmation-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .confirmation-dialog.active {
+            display: flex;
+        }
+        
+        .confirmation-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .confirmation-content h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .confirmation-content p {
+            margin: 0 0 25px 0;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+        }
+        
+        .confirmation-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .confirmation-buttons .btn {
+            min-width: 100px;
+        }
+        
+        /* Estilos específicos para el modal de documento duplicado */
+        .warning-dialog {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+        
+        .warning-dialog h3 {
+            color: #856404;
+        }
+        
+        .warning-dialog p {
+            color: #856404;
+            font-weight: 500;
+            white-space: pre-line;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .address-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <img th:src="@{/images/logo-hotel-premier.png}" alt="Hotel Premier">
+            Hotel Premier
+        </div>
+        <div class="navbar-user">
+            <span class="user-info">
+                Bienvenido, <strong sec:authentication="name">Usuario</strong>
+            </span>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="btn-logout">Cerrar Sesión</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="modal-overlay">
+            <div class="modal-container">
+            <div class="modal-header">
+                <h2>REGISTRO DE HUÉSPED</h2>
+            </div>
+            
+            <form class="modal-body">
+                <!-- Fila 1: Apellido, Nombres, Fecha de Nacimiento -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="required">APELLIDO</label>
+                        <input type="text" name="apellido" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">NOMBRES</label>
+                        <input type="text" name="nombres" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">FECHA DE NACIMIENTO</label>
+                        <input type="date" name="fechaNacimiento" placeholder="dd/mm/aaaa" required>
+                    </div>
+                </div>
+                
+                <!-- Fila 2: Tipo Documento, Número Documento, Nacionalidad -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="required">TIPO DOCUMENTO</label>
+                        <select name="tipoDocumento" required>
+                            <option value="">Seleccionar</option>
+                            <option value="DNI" selected>DNI</option>
+                            <option value="LE">LE</option>
+                            <option value="LC">LC</option>
+                            <option value="PASAPORTE">PASAPORTE</option>
+                            <option value="OTRO">OTRO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">NÚMERO DOCUMENTO</label>
+                        <input type="text" name="numeroDocumento" maxlength="8" pattern="[0-9]*" inputmode="numeric" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">NACIONALIDAD</label>
+                        <select name="nacionalidad" required>
+                            <option value="">Seleccionar</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Fila 3: País, Provincia, Localidad -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="required">PAÍS</label>
+                        <select name="pais" required>
+                            <option value="">Seleccionar</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">PROVINCIA</label>
+                        <select name="provincia" required disabled>
+                            <option value="">Seleccionar</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">LOCALIDAD</label>
+                        <select name="localidad" required disabled>
+                            <option value="">Seleccionar</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Fila 4: Dirección (Calle, Número, Dpto, Piso, Código Postal) -->
+                <div class="address-grid">
+                    <div class="form-group">
+                        <label class="required">CALLE</label>
+                        <input type="text" name="calle" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">NÚMERO</label>
+                        <input type="text" name="numero" maxlength="5" pattern="[0-9]*" inputmode="numeric" required>
+                    </div>
+                    <div class="form-group">
+                        <label>DPTO.</label>
+                        <input type="text" name="departamento" maxlength="5">
+                    </div>
+                    <div class="form-group">
+                        <label>PISO</label>
+                        <input type="text" name="piso" maxlength="5">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">CÓDIGO POSTAL</label>
+                        <input type="text" name="codigoPostal" maxlength="4" pattern="[0-9]*" inputmode="numeric" required>
+                    </div>
+                </div>
+                
+                <!-- Fila 5: Teléfono, Email, Ocupación -->
+                <div class="contact-grid">
+                    <div class="form-group">
+                        <label class="required">TELÉFONO</label>
+                        <input type="text" name="telefono" maxlength="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label>EMAIL</label>
+                        <input type="email" name="email" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">OCUPACIÓN</label>
+                        <input type="text" name="ocupacion" maxlength="100" required>
+                    </div>
+                </div>
+                
+                <!-- Fila 6: Posición Frente al IVA, CUIT -->
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="required">POSICIÓN FRENTE AL IVA</label>
+                        <select name="posicionIVA" id="posicionIVA" required>
+                            <option value="">Seleccionar</option>
+                            <option value="RESPONSABLE_INSCRIPTO">Responsable Inscripto</option>
+                            <option value="MONOTRIBUTISTA">Monotributista</option>
+                            <option value="CONSUMIDOR_FINAL" selected>Consumidor Final</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label id="labelCuit">CUIT</label>
+                        <input type="text" name="cuit" id="cuit" maxlength="11" pattern="[0-9]*" inputmode="numeric" placeholder="XXXXXXXXXXX">
+                    </div>
+                </div>
+            </form>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnSiguiente">SIGUIENTE</button>
+                <button type="button" class="btn btn-secondary" id="btnCancelar">CANCELAR</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div id="confirmationDialog" class="confirmation-dialog">
+        <div class="confirmation-content">
+            <h3 id="confirmationTitle">Confirmación</h3>
+            <p id="confirmationMessage">¿Está seguro?</p>
+            <div class="confirmation-buttons">
+                <button type="button" class="btn btn-primary" id="btnConfirmSi">SÍ</button>
+                <button type="button" class="btn btn-secondary" id="btnConfirmNo">NO</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales para almacenar los datos
+        let localidades = [];
+        let nacionalidades = [];
+        let paises = new Map();
+        let provincias = new Map();
+
+        // Cargar datos al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarNacionalidades();
+            cargarLocalidades();
+            
+            // Convertir automáticamente a mayúsculas todos los inputs de texto (excepto teléfono)
+            const inputs = document.querySelectorAll('input[type="text"]:not([name="telefono"]), input[type="email"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    this.value = this.value.toUpperCase();
+                    this.setSelectionRange(start, end);
+                });
+            });
+            
+            // Restringir campos numéricos para que solo acepten dígitos
+            const camposNumericos = document.querySelectorAll('input[name="numeroDocumento"], input[name="numero"], input[name="codigoPostal"], input[name="cuit"]');
+            camposNumericos.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    // Permitir solo números (0-9)
+                    const charCode = e.which ? e.which : e.keyCode;
+                    if (charCode < 48 || charCode > 57) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                
+                // Prevenir pegar texto no numérico
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    const numericText = pastedText.replace(/\D/g, ''); // Eliminar todo lo que no sea dígito
+                    
+                    // Respetar el maxlength
+                    const maxLength = this.getAttribute('maxlength');
+                    const finalText = maxLength ? numericText.substring(0, maxLength) : numericText;
+                    
+                    this.value = finalText;
+                });
+                
+                // Limpiar cualquier carácter no numérico en el input
+                input.addEventListener('input', function(e) {
+                    const start = this.selectionStart;
+                    const originalValue = this.value;
+                    this.value = this.value.replace(/\D/g, ''); // Eliminar todo lo que no sea dígito
+                    
+                    // Ajustar la posición del cursor si se eliminaron caracteres
+                    if (originalValue !== this.value) {
+                        this.setSelectionRange(start - 1, start - 1);
+                    }
+                });
+            });
+            
+            // Restringir campos de nombre y apellido para que solo acepten letras y espacios
+            const camposTexto = document.querySelectorAll('input[name="apellido"], input[name="nombres"]');
+            camposTexto.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    const charCode = e.which ? e.which : e.keyCode;
+                    const char = String.fromCharCode(charCode);
+                    
+                    // Permitir letras (mayúsculas, minúsculas, con acentos, ñ, ü) y espacio
+                    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]$/;
+                    
+                    if (!regex.test(char)) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                
+                // Prevenir pegar texto con caracteres no válidos
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    // Eliminar todo lo que no sea letra o espacio
+                    const cleanText = pastedText.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+                    
+                    // Respetar el maxlength
+                    const maxLength = this.getAttribute('maxlength');
+                    const finalText = maxLength ? cleanText.substring(0, maxLength) : cleanText;
+                    
+                    // Insertar el texto limpio y convertirlo a mayúsculas
+                    this.value = finalText.toUpperCase();
+                });
+                
+                // Limpiar cualquier carácter no válido en el input
+                input.addEventListener('input', function(e) {
+                    const start = this.selectionStart;
+                    const originalValue = this.value;
+                    // Eliminar todo lo que no sea letra o espacio (antes de convertir a mayúsculas)
+                    this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+                    
+                    // Ajustar la posición del cursor si se eliminaron caracteres
+                    if (originalValue !== this.value) {
+                        this.setSelectionRange(start - 1, start - 1);
+                    }
+                });
+            });
+            
+            // Restringir campo de teléfono para que solo acepte números, espacios, guiones y el signo +
+            const campoTelefono = document.querySelector('input[name="telefono"]');
+            if (campoTelefono) {
+                campoTelefono.addEventListener('keypress', function(e) {
+                    const charCode = e.which ? e.which : e.keyCode;
+                    const char = String.fromCharCode(charCode);
+                    
+                    // Permitir números (0-9), espacios, guiones (-) y el signo más (+)
+                    const regex = /^[0-9\s\-\+]$/;
+                    
+                    if (!regex.test(char)) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                
+                // Prevenir pegar texto con caracteres no válidos
+                campoTelefono.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    // Eliminar todo lo que no sea número, espacio, guión o +
+                    const cleanText = pastedText.replace(/[^0-9\s\-\+]/g, '');
+                    
+                    // Respetar el maxlength
+                    const maxLength = this.getAttribute('maxlength');
+                    const finalText = maxLength ? cleanText.substring(0, maxLength) : cleanText;
+                    
+                    this.value = finalText;
+                });
+                
+                // Limpiar cualquier carácter no válido en el input
+                campoTelefono.addEventListener('input', function(e) {
+                    const start = this.selectionStart;
+                    const originalValue = this.value;
+                    // Eliminar todo lo que no sea número, espacio, guión o +
+                    this.value = this.value.replace(/[^0-9\s\-\+]/g, '');
+                    
+                    // Ajustar la posición del cursor si se eliminaron caracteres
+                    if (originalValue !== this.value) {
+                        this.setSelectionRange(start - 1, start - 1);
+                    }
+                });
+            }
+        });
+
+        /**
+         * Carga las nacionalidades desde la API
+         */
+        async function cargarNacionalidades() {
+            try {
+                const response = await fetch('/api/personas/nacionalidades');
+                if (!response.ok) {
+                    throw new Error('Error al cargar nacionalidades');
+                }
+                
+                nacionalidades = await response.json();
+                console.log('Nacionalidades cargadas:', nacionalidades);
+                
+                // Rellenar el select de nacionalidades
+                const selectNacionalidad = document.querySelector('select[name="nacionalidad"]');
+                selectNacionalidad.innerHTML = '<option value="">Seleccionar</option>';
+                
+                nacionalidades.forEach(nacionalidad => {
+                    const option = document.createElement('option');
+                    option.value = nacionalidad.id;
+                    option.textContent = nacionalidad.nombre;
+                    option.dataset.nacionalidadId = nacionalidad.id;
+                    selectNacionalidad.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Error al cargar nacionalidades:', error);
+                alert('Error al cargar las nacionalidades. Por favor, recargue la página.');
+            }
+        }
+
+        /**
+         * Carga las localidades desde la API y extrae países y provincias
+         */
+        async function cargarLocalidades() {
+            try {
+                const response = await fetch('/api/personas/localidades');
+                if (!response.ok) {
+                    throw new Error('Error al cargar localidades');
+                }
+                
+                localidades = await response.json();
+                console.log('Localidades cargadas:', localidades);
+                
+                // Extraer países únicos
+                localidades.forEach(localidad => {
+                    const pais = localidad.provincia.pais;
+                    if (!paises.has(pais.id)) {
+                        paises.set(pais.id, pais);
+                    }
+                    
+                    // Extraer provincias únicas
+                    const provincia = localidad.provincia;
+                    if (!provincias.has(provincia.id)) {
+                        provincias.set(provincia.id, provincia);
+                    }
+                });
+                
+                // Rellenar el select de países
+                cargarPaises();
+                
+            } catch (error) {
+                console.error('Error al cargar localidades:', error);
+                alert('Error al cargar las localidades. Por favor, recargue la página.');
+            }
+        }
+
+        /**
+         * Rellena el select de países
+         */
+        function cargarPaises() {
+            const selectPais = document.querySelector('select[name="pais"]');
+            selectPais.innerHTML = '<option value="">Seleccionar</option>';
+            
+            // Ordenar países alfabéticamente
+            const paisesArray = Array.from(paises.values()).sort((a, b) => 
+                a.nombre.localeCompare(b.nombre)
+            );
+            
+            paisesArray.forEach(pais => {
+                const option = document.createElement('option');
+                option.value = pais.id;
+                option.textContent = pais.nombre;
+                option.dataset.paisId = pais.id;
+                selectPais.appendChild(option);
+            });
+        }
+
+        /**
+         * Filtra y carga las provincias según el país seleccionado
+         */
+        function cargarProvinciasPorPais(paisId) {
+            const selectProvincia = document.querySelector('select[name="provincia"]');
+            selectProvincia.innerHTML = '<option value="">Seleccionar</option>';
+            selectProvincia.disabled = !paisId;
+            
+            // Limpiar localidades
+            const selectLocalidad = document.querySelector('select[name="localidad"]');
+            selectLocalidad.innerHTML = '<option value="">Seleccionar</option>';
+            selectLocalidad.disabled = true;
+            
+            if (!paisId) return;
+            
+            // Filtrar provincias del país seleccionado
+            const provinciasDelPais = Array.from(provincias.values())
+                .filter(provincia => provincia.pais.id == paisId)
+                .sort((a, b) => a.nombre.localeCompare(b.nombre));
+            
+            provinciasDelPais.forEach(provincia => {
+                const option = document.createElement('option');
+                option.value = provincia.id;
+                option.textContent = provincia.nombre;
+                option.dataset.provinciaId = provincia.id;
+                selectProvincia.appendChild(option);
+            });
+        }
+
+        /**
+         * Filtra y carga las localidades según la provincia seleccionada
+         */
+        function cargarLocalidadesPorProvincia(provinciaId) {
+            const selectLocalidad = document.querySelector('select[name="localidad"]');
+            selectLocalidad.innerHTML = '<option value="">Seleccionar</option>';
+            selectLocalidad.disabled = !provinciaId;
+            
+            if (!provinciaId) return;
+            
+            // Filtrar localidades de la provincia seleccionada
+            const localidadesDeProvincia = localidades
+                .filter(localidad => localidad.provincia.id == provinciaId)
+                .sort((a, b) => a.nombre.localeCompare(b.nombre));
+            
+            localidadesDeProvincia.forEach(localidad => {
+                const option = document.createElement('option');
+                option.value = localidad.id;
+                option.textContent = localidad.nombre;
+                option.dataset.localidadId = localidad.id;
+                selectLocalidad.appendChild(option);
+            });
+        }
+
+        // Event listeners para los selects en cascada
+        document.querySelector('select[name="pais"]').addEventListener('change', function() {
+            cargarProvinciasPorPais(this.value);
+        });
+
+        document.querySelector('select[name="provincia"]').addEventListener('change', function() {
+            cargarLocalidadesPorProvincia(this.value);
+        });
+
+        /**
+         * Event listener para validar el campo CUIT según la posición frente al IVA
+         * Si es RESPONSABLE_INSCRIPTO, el CUIT es obligatorio
+         */
+        document.getElementById('posicionIVA').addEventListener('change', function() {
+            const cuitInput = document.getElementById('cuit');
+            const cuitLabel = document.getElementById('labelCuit');
+            
+            if (this.value === 'RESPONSABLE_INSCRIPTO') {
+                // Hacer el CUIT obligatorio
+                cuitInput.required = true;
+                cuitLabel.classList.add('required');
+                console.log('CUIT es ahora obligatorio (Responsable Inscripto)');
+            } else {
+                // Hacer el CUIT opcional
+                cuitInput.required = false;
+                cuitLabel.classList.remove('required');
+                console.log('CUIT es ahora opcional');
+            }
+        });
+
+        /**
+         * Valida y envía el formulario de registro de huésped
+         * @param {boolean} permitirDuplicado - Si es true, utiliza el endpoint que permite duplicados
+         */
+        async function registrarHuesped(permitirDuplicado = false) {
+            try {
+                // Obtener el formulario
+                const form = document.querySelector('.modal-body');
+                
+                // Validar el formulario HTML5
+                // (la validación del CUIT se maneja automáticamente con el atributo required)
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                // Capturar los datos del formulario
+                const formData = {
+                    apellido: form.querySelector('input[name="apellido"]').value,
+                    nombre: form.querySelector('input[name="nombres"]').value,
+                    fechaNacimiento: form.querySelector('input[name="fechaNacimiento"]').value,
+                    tipoDocumento: form.querySelector('select[name="tipoDocumento"]').value,
+                    documento: form.querySelector('input[name="numeroDocumento"]').value,
+                    nacionalidadId: parseInt(form.querySelector('select[name="nacionalidad"]').value),
+                    localidadId: parseInt(form.querySelector('select[name="localidad"]').value),
+                    calle: form.querySelector('input[name="calle"]').value,
+                    numero: form.querySelector('input[name="numero"]').value,
+                    departamento: form.querySelector('input[name="departamento"]').value || null,
+                    piso: form.querySelector('input[name="piso"]').value || null,
+                    codigoPostal: form.querySelector('input[name="codigoPostal"]').value,
+                    telefono: form.querySelector('input[name="telefono"]').value,
+                    email: form.querySelector('input[name="email"]').value || null,
+                    ocupacion: form.querySelector('input[name="ocupacion"]').value,
+                    posicionFrenteAlIVA: form.querySelector('select[name="posicionIVA"]').value,
+                    cuit: form.querySelector('input[name="cuit"]').value || null,
+                    info: form.querySelector('input[name="ocupacion"]').value // Usando ocupación como info
+                };
+
+                console.log('Datos del formulario:', formData);
+
+                // Deshabilitar el botón mientras se procesa
+                const btnSiguiente = document.getElementById('btnSiguiente');
+                btnSiguiente.disabled = true;
+                btnSiguiente.textContent = 'PROCESANDO...';
+
+                // Elegir el endpoint según si permite duplicado
+                const endpoint = permitirDuplicado 
+                    ? '/api/personas/huesped/alta-duplicado' 
+                    : '/api/personas/huesped/alta';
+
+                console.log('Enviando a endpoint:', endpoint);
+
+                // Enviar al endpoint
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    
+                    // Si es un error de documento duplicado y NO estamos permitiendo duplicados
+                    if (!permitirDuplicado && errorData.message && 
+                        errorData.message.includes('tipo y número de documento ya existen')) {
+                        
+                        // Rehabilitar el botón
+                        btnSiguiente.disabled = false;
+                        btnSiguiente.textContent = 'SIGUIENTE';
+                        
+                        // Mostrar modal de confirmación de duplicado
+                        mostrarDialogoDocumentoDuplicado(formData.tipoDocumento, formData.documento);
+                        return;
+                    }
+                    
+                    throw new Error(errorData.message || 'Error al registrar el huésped');
+                }
+
+                const resultado = await response.json();
+                console.log('Huésped registrado exitosamente:', resultado);
+                
+                // Mostrar mensaje de confirmación para cargar otro huésped
+                mostrarDialogoCargarOtro(formData.nombre, formData.apellido);
+
+            } catch (error) {
+                console.error('Error al registrar huésped:', error);
+                alert('Error al registrar el huésped: ' + error.message);
+                
+                // Rehabilitar el botón
+                const btnSiguiente = document.getElementById('btnSiguiente');
+                btnSiguiente.disabled = false;
+                btnSiguiente.textContent = 'SIGUIENTE';
+            }
+        }
+
+        /**
+         * Muestra el diálogo cuando se detecta un documento duplicado
+         * @param {string} tipoDocumento - Tipo de documento (DNI, PASAPORTE, etc.)
+         * @param {string} documento - Número de documento
+         */
+        function mostrarDialogoDocumentoDuplicado(tipoDocumento, documento) {
+            const dialog = document.getElementById('confirmationDialog');
+            const content = dialog.querySelector('.confirmation-content');
+            const title = document.getElementById('confirmationTitle');
+            const message = document.getElementById('confirmationMessage');
+            const btnSi = document.getElementById('btnConfirmSi');
+            const btnNo = document.getElementById('btnConfirmNo');
+            
+            // Agregar estilos de advertencia
+            content.classList.add('warning-dialog');
+            
+            title.textContent = '¡CUIDADO!';
+            message.textContent = `El tipo y número de documento ya existen en el sistema.\n\n${tipoDocumento}: ${documento}`;
+            
+            // Cambiar texto de los botones
+            btnSi.textContent = 'ACEPTAR IGUALMENTE';
+            btnNo.textContent = 'CORREGIR';
+            
+            dialog.classList.add('active');
+            
+            // Handler para el botón ACEPTAR IGUALMENTE
+            btnSi.onclick = function() {
+                dialog.classList.remove('active');
+                content.classList.remove('warning-dialog');
+                
+                // Restaurar texto original de botones
+                btnSi.textContent = 'SÍ';
+                btnNo.textContent = 'NO';
+                
+                // Llamar a registrar con permitirDuplicado = true
+                console.log('Usuario eligió ACEPTAR IGUALMENTE - Registrando con duplicado permitido');
+                registrarHuesped(true);
+            };
+            
+            // Handler para el botón CORREGIR
+            btnNo.onclick = function() {
+                dialog.classList.remove('active');
+                content.classList.remove('warning-dialog');
+                
+                // Restaurar texto original de botones
+                btnSi.textContent = 'SÍ';
+                btnNo.textContent = 'NO';
+                
+                // Enfocar el campo de tipo de documento para facilitar la corrección
+                console.log('Usuario eligió CORREGIR - Manteniendo datos para edición');
+                document.querySelector('select[name="tipoDocumento"]').focus();
+            };
+        }
+
+        /**
+         * Muestra el diálogo para preguntar si desea cargar otro huésped
+         */
+        function mostrarDialogoCargarOtro(nombre, apellido) {
+            const dialog = document.getElementById('confirmationDialog');
+            const title = document.getElementById('confirmationTitle');
+            const message = document.getElementById('confirmationMessage');
+            const btnSi = document.getElementById('btnConfirmSi');
+            const btnNo = document.getElementById('btnConfirmNo');
+            
+            title.textContent = '¡Registro Exitoso!';
+            message.textContent = `El huésped ${nombre} ${apellido} ha sido satisfactoriamente cargado al sistema. ¿Desea cargar otro?`;
+            
+            dialog.classList.add('active');
+            
+            // Handler para el botón SÍ
+            btnSi.onclick = function() {
+                dialog.classList.remove('active');
+                limpiarFormulario();
+                
+                // Rehabilitar el botón
+                const btnSiguiente = document.getElementById('btnSiguiente');
+                btnSiguiente.disabled = false;
+                btnSiguiente.textContent = 'SIGUIENTE';
+            };
+            
+            // Handler para el botón NO
+            btnNo.onclick = function() {
+                dialog.classList.remove('active');
+                window.location.href = '/menu-principal';
+            };
+        }
+
+        /**
+         * Limpia todos los campos del formulario
+         */
+        function limpiarFormulario() {
+            const form = document.querySelector('.modal-body');
+            
+            // Limpiar inputs de texto, date, email, tel
+            form.querySelectorAll('input[type="text"], input[type="date"], input[type="email"], input[type="tel"]').forEach(input => {
+                input.value = '';
+            });
+            
+            // Reset selects
+            form.querySelectorAll('select').forEach(select => {
+                select.selectedIndex = 0;
+            });
+            
+            // Deshabilitar provincia y localidad
+            form.querySelector('select[name="provincia"]').disabled = true;
+            form.querySelector('select[name="localidad"]').disabled = true;
+            
+            // Enfocar el primer campo
+            form.querySelector('input[name="apellido"]').focus();
+        }
+
+        /**
+         * Muestra el diálogo de confirmación para cancelar el alta
+         */
+        function confirmarCancelacion() {
+            const dialog = document.getElementById('confirmationDialog');
+            const title = document.getElementById('confirmationTitle');
+            const message = document.getElementById('confirmationMessage');
+            const btnSi = document.getElementById('btnConfirmSi');
+            const btnNo = document.getElementById('btnConfirmNo');
+            
+            title.textContent = 'Confirmar Cancelación';
+            message.textContent = '¿Desea cancelar el alta del huésped?';
+            
+            dialog.classList.add('active');
+            
+            // Handler para el botón SÍ
+            btnSi.onclick = function() {
+                dialog.classList.remove('active');
+                window.history.back();
+            };
+            
+            // Handler para el botón NO
+            btnNo.onclick = function() {
+                dialog.classList.remove('active');
+            };
+        }
+
+        // Event listener para el botón SIGUIENTE
+        document.getElementById('btnSiguiente').addEventListener('click', function() {
+            registrarHuesped(false);
+        });
+        
+        // Event listener para el botón CANCELAR
+        document.getElementById('btnCancelar').addEventListener('click', confirmarCancelacion);
+    </script>
+</body>
+</html>

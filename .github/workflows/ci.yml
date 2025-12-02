@@ -1,0 +1,63 @@
+name: CI - Tests Automáticos
+
+# Define cuándo se ejecutará este workflow
+on:
+  # Se ejecuta en cada push a develop y main
+  push:
+    branches: [ develop, main ]
+  # Se ejecuta en cada Pull Request hacia develop y main
+  pull_request:
+    branches: [ develop, main ]
+
+# Permisos necesarios para crear reportes y checks
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  test:
+    name: Ejecutar Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Checkout del código
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # Paso 2: Configurar Java 21
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # Paso 3: Dar permisos de ejecución a Maven Wrapper
+      - name: Dar permisos a mvnw
+        run: chmod +x hotel-premier/mvnw
+
+      # Paso 4: Ejecutar tests con Maven
+      - name: Ejecutar tests con Maven
+        run: |
+          cd hotel-premier
+          ./mvnw clean test --batch-mode --no-transfer-progress
+
+      # Paso 5: Generar reporte de resultados de tests (solo si existen reportes)
+      - name: Publicar resultados de tests
+        uses: dorny/test-reporter@v1
+        if: always() && hashFiles('hotel-premier/target/surefire-reports/*.xml') != ''
+        with:
+          name: Reporte de Tests Maven
+          path: hotel-premier/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+
+      # Paso 6: Subir reporte de tests (solo si existe el directorio)
+      - name: Subir reporte de tests
+        uses: actions/upload-artifact@v4
+        if: always() && hashFiles('hotel-premier/target/surefire-reports/*') != ''
+        with:
+          name: test-results
+          path: hotel-premier/target/surefire-reports/
+          retention-days: 30

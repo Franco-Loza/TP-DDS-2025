@@ -1,0 +1,69 @@
+# Configuración para el entorno de desarrollo
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hotel_premier_dev}
+    username: ${SPRING_DATASOURCE_USERNAME:dev_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:dev_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+    hibernate:
+      ddl-auto: validate
+
+  # Los datos iniciales se cargan desde PostgreSQL init.sql
+  # No se ejecuta data.sql en cada arranque de la aplicación
+  sql:
+    init:
+      mode: never
+
+  # Configuración de Spring Security (solo para desarrollo)
+  security:
+    user:
+      name: admin
+      password: admin123
+
+  # Configuración de DevTools (si está habilitado)
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+# Logging más detallado para desarrollo
+logging:
+  level:
+    root: INFO
+    com.losmergeconflicts.hotelpremier: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  file:
+    name: logs/hotel-premier-dev.log
+
+# Actuator con más endpoints expuestos en desarrollo
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+# Configuración del servidor
+server:
+  error:
+    include-stacktrace: always
+    include-exception: true

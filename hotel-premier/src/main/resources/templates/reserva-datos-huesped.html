@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar Habitaciones - Hotel Premier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* ... TUS ESTILOS ... */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .navbar { background: rgba(255, 255, 255, 0.95); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .content-card { background: white; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); overflow: hidden; }
+        .content-header { padding: 20px 30px; border-bottom: 1px solid #e0e0e0; }
+        .content-body { padding: 25px 30px; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 20px; }
+        .form-group input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-transform: uppercase;}
+        .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn { padding: 10px 25px; border-radius: 4px; cursor: pointer; font-weight: bold; border: none; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+
+        .confirmation-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 10000; }
+        .confirmation-dialog.active { display: flex; }
+        .confirmation-content { background: white; border-radius: 8px; padding: 30px; max-width: 500px; text-align: center; }
+        .success-dialog { background-color: #d4edda; border: 2px solid #28a745; }
+        .confirmation-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div style="font-size: 24px; font-weight: bold; color: #667eea;">Hotel Premier</div>
+    <div>
+        <span>Bienvenido, <strong>Usuario</strong></span>
+        <form th:action="@{/logout}" method="post" style="display: inline;">
+            <button style="padding: 8px 20px; background: #764ba2; color: white; border: none; border-radius: 5px; margin-left: 15px; cursor: pointer;">Cerrar Sesión</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="content-card">
+        <div class="content-header">
+            <h2>RESERVAR HABITACIONES</h2>
+        </div>
+
+        <div class="content-body">
+            <div style="font-weight: 600; margin-bottom: 20px;">RESERVA A NOMBRE DE:</div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label for="apellido">APELLIDO (*)</label>
+                    <input type="text" id="apellido" name="apellido" maxlength="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="nombres">NOMBRE(S) (*)</label>
+                    <input type="text" id="nombres" name="nombres" maxlength="100" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="telefono">TELÉFONO (*)</label>
+                <input type="text" id="telefono" name="telefono" maxlength="20" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btnAceptar">ACEPTAR</button>
+                <button type="button" class="btn btn-secondary" id="btnCancelar">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmationDialog" class="confirmation-dialog">
+    <div class="confirmation-content">
+        <h3>Confirmación</h3>
+        <p>¿Está seguro que desea cancelar? Se perderán los datos ingresados.</p>
+        <div class="confirmation-buttons">
+            <button type="button" class="btn btn-primary" id="btnConfirmarSi">SÍ</button>
+            <button type="button" class="btn btn-secondary" id="btnConfirmarNo">NO</button>
+        </div>
+    </div>
+</div>
+
+<div id="successDialog" class="confirmation-dialog">
+    <div class="confirmation-content success-dialog">
+        <h3 style="color: #155724;">¡Éxito!</h3>
+        <p id="successMessage" style="color: #155724;">¡Reserva registrada exitosamente!</p>
+        <div class="confirmation-buttons">
+            <button type="button" class="btn btn-primary" id="btnSuccessOk" style="background: #28a745;">ACEPTAR</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. RECUPERAR DATOS (Soporte Multi) ---
+    let reservaDataRaw = sessionStorage.getItem('reservaDataMulti');
+    if (!reservaDataRaw) {
+        reservaDataRaw = sessionStorage.getItem('reservaData');
+    }
+
+    let listaSolicitudes = [];
+    try {
+        if (reservaDataRaw) {
+            const parsed = JSON.parse(reservaDataRaw);
+            listaSolicitudes = Array.isArray(parsed) ? parsed : [parsed];
+        }
+    } catch (e) { console.error("Error JSON:", e); }
+
+    if (!listaSolicitudes.length) {
+        alert('No hay datos de reserva. Redirigiendo al menú principal...');
+        window.location.href = '/menu-principal';
+    }
+
+    // --- 2. VALIDACIONES ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputsTexto = document.querySelectorAll('input[name="apellido"], input[name="nombres"]');
+        inputsTexto.forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '').toUpperCase();
+            });
+        });
+
+        const inputTelefono = document.querySelector('input[name="telefono"]');
+        if (inputTelefono) {
+            inputTelefono.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9+\-\s]/g, '');
+            });
+        }
+    });
+
+    function mostrarError(mensaje) { alert('ERROR: ' + mensaje); }
+
+    // --- 3. ENVÍO AL BACKEND ---
+    document.getElementById('btnAceptar').addEventListener('click', async function() {
+        const apellido = document.getElementById('apellido').value.trim();
+        const nombres = document.getElementById('nombres').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+
+        if (!apellido || !nombres || !telefono) {
+            mostrarError("Todos los campos son obligatorios.");
+            return;
+        }
+
+        const listaFinal = listaSolicitudes.map(solicitud => {
+            let fIn = solicitud.fechaIngreso;
+            let fEg = solicitud.fechaEgreso;
+
+            if (fIn === fEg) {
+                const fechaObj = new Date(fIn + 'T00:00:00');
+                fechaObj.setDate(fechaObj.getDate() + 1);
+
+                const yyyy = fechaObj.getFullYear();
+                const mm = String(fechaObj.getMonth() + 1).padStart(2, '0');
+                const dd = String(fechaObj.getDate()).padStart(2, '0');
+                fEg = `${yyyy}-${mm}-${dd}`;
+            }
+
+            return {
+                fechaIngreso: fIn,
+                fechaEgreso: fEg,
+                idsHabitaciones: solicitud.idsHabitaciones || [solicitud.idHabitacion],
+                nombreHuesped: nombres,
+                apellidoHuesped: apellido,
+                telefonoHuesped: telefono
+            };
+        });
+
+        const btnAceptar = document.getElementById('btnAceptar');
+        btnAceptar.disabled = true;
+        btnAceptar.textContent = 'PROCESANDO...';
+
+        try {
+            const response = await fetch('/api/reservas/registrar-multiples', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(listaFinal)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMsg = errorText;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    if (errorJson.message) errorMsg = errorJson.message;
+                } catch(e) {}
+
+                throw new Error(errorMsg);
+            }
+
+            sessionStorage.removeItem('reservaData');
+            sessionStorage.removeItem('reservaDataMulti');
+            document.getElementById('successDialog').classList.add('active');
+
+        } catch (error) {
+            console.error('Error:', error);
+            let msg = error.message;
+            if (msg.includes('"message":')) {
+                try { msg = JSON.parse(msg).message; } catch(e){}
+            }
+            mostrarError(msg || 'Error al procesar la reserva.');
+
+            btnAceptar.disabled = false;
+            btnAceptar.textContent = 'ACEPTAR';
+        }
+    });
+
+    // --- LISTENERS MODALES ---
+    document.getElementById('btnCancelar').onclick = () => document.getElementById('confirmationDialog').classList.add('active');
+    document.getElementById('btnConfirmarSi').onclick = () => { sessionStorage.clear(); window.location.href = '/menu-principal'; };
+    document.getElementById('btnConfirmarNo').onclick = () => document.getElementById('confirmationDialog').classList.remove('active');
+    document.getElementById('btnSuccessOk').onclick = () => window.location.href = '/menu-principal';
+
+</script>
+</body>
+</html>

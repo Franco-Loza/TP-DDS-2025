@@ -1,0 +1,39 @@
+# Configuración para tests
+# Usa H2 (base de datos en memoria) para tests de integración
+# Los tests unitarios (con @ExtendWith(MockitoExtension.class)) NO usan esta configuración
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Crea y borra las tablas en cada test
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  # Deshabilitar ejecución de data.sql en tests
+  sql:
+    init:
+      mode: never
+  
+  h2:
+    console:
+      enabled: false  # No necesitamos la consola H2 en tests
+  
+  # Desactivar Docker Compose para tests
+  docker:
+    compose:
+      enabled: false
+
+# Configuración de logging para tests
+logging:
+  level:
+    com.losmergeconflicts.hotelpremier: INFO
+    org.springframework: WARN
+    org.hibernate: WARN

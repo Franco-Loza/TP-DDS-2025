@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar Habitaciones - Hotel Premier</title>
+    <style>
+        /* Estilos base */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+
+        .navbar { background: rgba(255, 255, 255, 0.95); padding: 15px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .navbar-brand { font-size: 24px; font-weight: bold; color: #667eea; }
+        .navbar-user { display: flex; align-items: center; gap: 15px; color: #333; }
+        .btn-logout { padding: 8px 20px; background: #764ba2; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .content-card { background: white; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); overflow: hidden; }
+        .content-header { padding: 20px 30px; border-bottom: 1px solid #e0e0e0; }
+        .content-header h2 { font-size: 20px; font-weight: 600; color: #333; margin: 0; }
+        .content-body { padding: 25px 30px; }
+
+        .table-container { overflow-x: auto; margin-bottom: 20px; border: 1px solid #eee; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        thead { background-color: #f8f9fa; }
+        th { padding: 12px 10px; text-align: center; font-weight: 600; color: #555; border-bottom: 2px solid #e0e0e0; text-transform: uppercase; font-size: 12px; }
+        td { padding: 12px 10px; text-align: center; border-bottom: 1px solid #e0e0e0; background-color: white; color: #333; }
+        tbody tr:hover { background-color: #f1f3f5; }
+
+        .form-actions { display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 20px; }
+        .btn { padding: 10px 25px; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5a6fd6; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+
+        /* Modal Confirmación */
+        .confirmation-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 10000; }
+        .confirmation-dialog.active { display: flex; }
+        .confirmation-content { background: white; border-radius: 8px; padding: 30px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .confirmation-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Hotel Premier</div>
+    <div class="navbar-user">
+        <span>Bienvenido, <strong sec:authentication="name">Usuario</strong></span>
+        <form th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit" class="btn-logout">Salir</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="content-card">
+        <div class="content-header">
+            <h2>CONFIRMAR RESERVA</h2>
+        </div>
+        <div class="content-body">
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th rowspan="2" style="vertical-align: middle;">HABITACIÓN</th>
+                        <th rowspan="2" style="vertical-align: middle;">TIPO</th>
+                        <th colspan="3" style="background-color: #eef2ff;">INGRESO</th>
+                        <th colspan="3" style="background-color: #fff7ed;">EGRESO</th>
+                    </tr>
+                    <tr>
+                        <th style="background-color: #eef2ff;">DÍA</th>
+                        <th style="background-color: #eef2ff;">FECHA</th>
+                        <th style="background-color: #eef2ff;">HORA</th>
+
+                        <th style="background-color: #fff7ed;">DÍA</th>
+                        <th style="background-color: #fff7ed;">FECHA</th>
+                        <th style="background-color: #fff7ed;">HORA</th>
+                    </tr>
+                    </thead>
+                    <tbody id="reservasBody">
+                    <tr><td colspan="8">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="btnAceptar">ACEPTAR</button>
+                <button type="button" class="btn btn-secondary" id="btnRechazar">RECHAZAR</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmationDialog" class="confirmation-dialog">
+    <div class="confirmation-content">
+        <h3 style="margin-bottom: 10px; color: #333;">Confirmación</h3>
+        <p style="color: #666;">¿Está seguro que desea cancelar la operación?</p>
+        <div class="confirmation-buttons">
+            <button type="button" class="btn btn-primary" id="btnConfirmarSi">SÍ</button>
+            <button type="button" class="btn btn-secondary" id="btnConfirmarNo">NO</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. RECUPERAR DATOS DE SESIÓN ---
+    let reservaDataRaw = sessionStorage.getItem('reservaDataMulti');
+    if (!reservaDataRaw) {
+        reservaDataRaw = sessionStorage.getItem('reservaData');
+    }
+
+    let listaSolicitudes = [];
+    try {
+        if (reservaDataRaw) {
+            const parsed = JSON.parse(reservaDataRaw);
+            listaSolicitudes = Array.isArray(parsed) ? parsed : [parsed];
+        }
+    } catch (e) { console.error("Error JSON:", e); }
+
+    if (!listaSolicitudes.length) {
+        alert('No hay datos de reserva. Volviendo al menú.');
+        window.location.href = '/menu-principal';
+    }
+
+    // --- 2. CARGAR INFO ---
+    async function cargarHabitaciones() {
+        try {
+            const idsUnicos = new Set();
+            listaSolicitudes.forEach(req => {
+                if (req.idsHabitaciones && Array.isArray(req.idsHabitaciones)) {
+                    req.idsHabitaciones.forEach(id => idsUnicos.add(id));
+                } else if (req.idHabitacion) {
+                    idsUnicos.add(req.idHabitacion);
+                }
+            });
+
+            const params = new URLSearchParams();
+            idsUnicos.forEach(id => params.append('ids', id));
+
+            const response = await fetch(`/api/habitaciones/listar-por-ids?${params.toString()}`);
+            if (!response.ok) throw new Error('Error API');
+
+            const habitacionesBackend = await response.json();
+            renderizarTabla(habitacionesBackend);
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('reservasBody').innerHTML =
+                '<tr><td colspan="8" style="color:red; padding:20px;">Error cargando datos.</td></tr>';
+        }
+    }
+
+    // --- 3. RENDERIZAR TABLA ---
+    function renderizarTabla(habitacionesInfo) {
+        const tbody = document.getElementById('reservasBody');
+        tbody.innerHTML = '';
+
+        const mapHabitaciones = {};
+
+        habitacionesInfo.forEach(h => {
+            if (h.id) mapHabitaciones[String(h.id)] = h;
+            else if (h.idHabitacion) mapHabitaciones[String(h.idHabitacion)] = h;
+            else if (h.habitacionId) mapHabitaciones[String(h.habitacionId)] = h;
+        });
+
+        console.log("Mapa construido:", mapHabitaciones); // Para debug
+
+        const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+        listaSolicitudes.forEach(solicitud => {
+            let idsParaProcesar = [];
+            if (solicitud.idsHabitaciones && Array.isArray(solicitud.idsHabitaciones)) {
+                idsParaProcesar = solicitud.idsHabitaciones;
+            } else if (solicitud.idHabitacion) {
+                idsParaProcesar = [solicitud.idHabitacion];
+            }
+
+            idsParaProcesar.forEach(idHab => {
+
+                const info = mapHabitaciones[String(idHab)];
+
+                let nombreHab = info ? info.nombre : `Habitación ${idHab}`;
+
+                let tipoHab = 'TIPO DESCONOCIDO';
+                if (info) {
+                    if (info.tipoHabitacion) tipoHab = info.tipoHabitacion;
+                    else if (info.tipo) tipoHab = info.tipo;
+                }
+
+                if (typeof tipoHab === 'string') {
+                    tipoHab = tipoHab.replace(/_/g, ' ');
+                }
+
+                const fIngreso = new Date(solicitud.fechaIngreso + 'T00:00:00');
+                let fEgreso = new Date(solicitud.fechaEgreso + 'T00:00:00');
+                let fechaEgresoTexto = solicitud.fechaEgreso;
+
+                if (solicitud.fechaIngreso === solicitud.fechaEgreso) {
+                    const objSalida = new Date(fIngreso);
+                    objSalida.setDate(objSalida.getDate() + 1);
+                    fEgreso = objSalida;
+
+                    const y = objSalida.getFullYear();
+                    const m = String(objSalida.getMonth() + 1).padStart(2, '0');
+                    const d = String(objSalida.getDate()).padStart(2, '0');
+                    fechaEgresoTexto = `${y}-${m}-${d}`;
+                }
+
+                const diaIn = diasSemana[fIngreso.getDay()];
+                const diaEg = diasSemana[fEgreso.getDay()];
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:bold; color:#667eea; font-size:1.1em;">${nombreHab}</td>
+                    <td>${tipoHab}</td>
+                    <td>${diaIn}</td>
+                    <td>${formatearFecha(solicitud.fechaIngreso)}</td>
+                    <td style="font-weight:bold;">12:00</td>
+                    <td>${diaEg}</td>
+                    <td>${formatearFecha(fechaEgresoTexto)}</td>
+                    <td style="font-weight:bold;">10:00</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    }
+
+    function formatearFecha(iso) {
+        if (!iso) return '-';
+        const [y, m, d] = iso.split('-');
+        return `${d}/${m}/${y}`;
+    }
+
+    // --- EVENTOS ---
+    document.getElementById('btnAceptar').onclick = () => {
+        sessionStorage.setItem('reservaDataMulti', JSON.stringify(listaSolicitudes));
+        window.location.href = '/reserva/datos-huesped';
+    };
+
+    document.getElementById('btnRechazar').onclick = () => {
+        document.getElementById('confirmationDialog').classList.add('active');
+    };
+
+    document.getElementById('btnConfirmarSi').onclick = () => {
+        sessionStorage.clear();
+        window.location.href = '/menu-principal';
+    };
+
+    document.getElementById('btnConfirmarNo').onclick = () => {
+        document.getElementById('confirmationDialog').classList.remove('active');
+    };
+
+    document.addEventListener('DOMContentLoaded', cargarHabitaciones);
+</script>
+</body>
+</html>
