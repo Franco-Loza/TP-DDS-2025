@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,31 +71,13 @@ public class GestorHabitacionesImp implements GestorHabitaciones {
             throw new IllegalArgumentException("Fecha Hasta inválida (anterior a Fecha Desde)");
         }
 
+        // 1. Obtener Habitaciones: Si tipo es NULL, trae todas.
         List<Habitacion> habitaciones;
         if (tipoHabitacion == null) {
-            habitaciones = habitacionDAO.findAll();
+            habitaciones = habitacionDAO.findAllByOrderByNombreAsc();
         } else {
-            habitaciones = habitacionDAO.findByTipoHabitacion(tipoHabitacion);
+            habitaciones = habitacionDAO.findByTipoHabitacionOrderByNombreAsc(tipoHabitacion);
         }
-
-        habitaciones.sort((h1, h2) -> {
-            String n1 = h1.getNombre();
-            String n2 = h2.getNombre();
-
-            String prefix1 = n1.replaceAll("[0-9]", "");
-            String prefix2 = n2.replaceAll("[0-9]", "");
-
-            int compPrefix = prefix1.compareTo(prefix2);
-            if (compPrefix != 0) return compPrefix;
-
-            try {
-                int num1 = Integer.parseInt(n1.replaceAll("[^0-9]", ""));
-                int num2 = Integer.parseInt(n2.replaceAll("[^0-9]", ""));
-                return Integer.compare(num1, num2);
-            } catch (NumberFormatException e) {
-                return n1.compareTo(n2);
-            }
-        });
 
         List<String> nombresHabitaciones = habitaciones.stream().map(Habitacion::getNombre).toList();
 
@@ -104,11 +85,11 @@ public class GestorHabitacionesImp implements GestorHabitaciones {
         Map<String, Long> idsHabitaciones = habitaciones.stream()
                 .collect(java.util.stream.Collectors.toMap(Habitacion::getNombre, Habitacion::getId));
 
-        // 2. Obtener Reservas y Estadías en el rango (EL RESTO SIGUE IGUAL...)
+        // 2. Obtener Reservas y Estadías en el rango
         List<Reserva> reservas = reservaDAO.findReservasEnRango(fechaDesde, fechaHasta);
         List<Estadia> estadias = estadiaDAO.findEstadiasEnRango(fechaDesde.atStartOfDay(), fechaHasta.atTime(23, 59));
 
-        // 3. Construir filas
+        // 3. Construir filas (Cada fila es UN DÍA)
         List<GrillaDisponibilidadDTO.FilaFechaDTO> filas = new ArrayList<>();
 
         LocalDate current = fechaDesde;
@@ -127,84 +108,45 @@ public class GestorHabitacionesImp implements GestorHabitaciones {
         return new GrillaDisponibilidadDTO(nombresHabitaciones, idsHabitaciones, filas);
     }
 
-    private TipoEstadoHabitacion calcularEstado(Habitacion hab, LocalDate fechaEvaluada, List<Reserva> reservas, List<Estadia> estadias) {
-
-        // 1. Revisar ESTADÍAS (Color ROJO - OCUPADA)
-        boolean ocupada = estadias.stream().anyMatch(e -> {
-            if (!e.getHabitacion().getId().equals(hab.getId())) return false;
-
-            LocalDate fechaIngreso = e.getFechaHoraIngreso().toLocalDate();
-            LocalDate fechaLimite;
-
-            if (e.getFechaHoraEgreso() != null) {
-                fechaLimite = e.getFechaHoraEgreso().toLocalDate();
-            } else {
-                fechaLimite = (e.getFechaEgresoEsperado() != null) ? e.getFechaEgresoEsperado() : LocalDate.MAX;
-            }
-
-            return !fechaEvaluada.isBefore(fechaIngreso) && !fechaEvaluada.isAfter(fechaLimite);
-        });
-
+    private TipoEstadoHabitacion calcularEstado(Habitacion hab, LocalDate fecha, List<Reserva> reservas, List<Estadia> estadias) {
+        // Prioridad 1: OCUPADA
+        boolean ocupada = estadias.stream().anyMatch(e ->
+                e.getHabitacion().getId().equals(hab.getId()) &&
+                        !fecha.isBefore(e.getFechaHoraIngreso().toLocalDate()) &&
+                        (e.getFechaHoraEgreso() == null || !fecha.isAfter(e.getFechaHoraEgreso().toLocalDate()))
+        );
         if (ocupada) return TipoEstadoHabitacion.OCUPADA;
 
-        // 2. Revisar RESERVAS (Color AMARILLO - RESERVADA)
-        boolean reservada = reservas.stream().anyMatch(r -> {
-            if (r.getHabitaciones().stream().noneMatch(h -> h.getId().equals(hab.getId()))) return false;
-            LocalDate rIngreso = obtenerFechaPura(r.getFechaIngreso());
-            LocalDate rEgreso = obtenerFechaPura(r.getFechaEgreso());
-            return !fechaEvaluada.isBefore(rIngreso) && !fechaEvaluada.isAfter(rEgreso);
-        });
-
+        // Prioridad 2: RESERVADA
+        boolean reservada = reservas.stream().anyMatch(r ->
+                r.getHabitaciones().stream().anyMatch(h -> h.getId().equals(hab.getId())) &&
+                        !fecha.isBefore(r.getFechaIngreso()) &&
+                        !fecha.isAfter(r.getFechaEgreso())
+        );
         if (reservada) return TipoEstadoHabitacion.RESERVADA;
 
+        // Prioridad 3: LIBRE
         return TipoEstadoHabitacion.LIBRE;
     }
 
-    // Método auxiliar pequeño para evitar errores si la entidad cambia entre Date/DateTime
-    private LocalDate obtenerFechaPura(Object fecha) {
-        if (fecha instanceof LocalDateTime) {
-            return ((LocalDateTime) fecha).toLocalDate();
-        } else if (fecha instanceof LocalDate) {
-            return (LocalDate) fecha;
-        }
-
-        return LocalDate.now();
-    }
-
     @Override
-    @Transactional(readOnly = true)
     public DetalleReservaDTO obtenerDetalleReserva(String nombreHabitacion, LocalDate fecha) {
-        List<Reserva> reservas = reservaDAO.findReservaPorHabitacionYFecha(nombreHabitacion, fecha);
+        Reserva reserva = reservaDAO.findReservaPorHabitacionYFecha(nombreHabitacion, fecha)
+                .orElseThrow(() -> new IllegalArgumentException("No se encontró reserva para esta fecha y habitación"));
 
-        if (reservas.isEmpty()) {
-            throw new IllegalArgumentException("No se encontró reserva activa en esa fecha para " + nombreHabitacion);
-        }
-
-        Reserva r = reservas.get(0);
-
-        String nombre = "Desconocido";
-        String apellido = "Sin Datos";
-        String telefono = " - ";
-
-        if (r.getHuesped() != null) {
-            nombre = r.getHuesped().getNombre();
-            apellido = r.getHuesped().getApellido();
-            telefono = r.getHuesped().getTelefono();
-        } else {
-            if (r.getNombreHuesped() != null) nombre = r.getNombreHuesped();
-            if (r.getApellidoHuesped() != null) apellido = r.getApellidoHuesped();
-            if (r.getTelefonoHuesped() != null) telefono = r.getTelefonoHuesped();
-        }
-
-        return new DetalleReservaDTO(apellido, nombre, telefono);
+        return new DetalleReservaDTO(
+                reserva.getHuesped().getApellido(),
+                reserva.getHuesped().getNombre(),
+                reserva.getHuesped().getTelefono()
+        );
     }
 
     /**
      * Lista las habitaciones filtradas por sus IDs.
-     *
+     * 
      * Busca las habitaciones en la base de datos usando los IDs proporcionados
      * y las convierte a DTOs de respuesta usando el mapper.
-     *
+     * 
      * @param idsHabitaciones Lista de IDs de habitaciones a buscar
      * @return Lista de DTOs de las habitaciones encontradas (se retorna solo los datos limitados que se requieren para la vista)
      * @throws IllegalArgumentException si la lista de IDs es nula o vacía
@@ -212,7 +154,7 @@ public class GestorHabitacionesImp implements GestorHabitaciones {
     @Override
     @Transactional(readOnly = true)
     public List<HabitacionDTOResponse> listarHabitacionesPorID(List<Long> idsHabitaciones) {
-
+        
         if (idsHabitaciones == null || idsHabitaciones.isEmpty()) {
             log.warn("Intento de listar habitaciones con lista de IDs vacía o nula");
             throw new IllegalArgumentException("La lista de IDs de habitaciones no puede ser nula o vacía");

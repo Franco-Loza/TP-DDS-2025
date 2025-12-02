@@ -20,6 +20,23 @@ public interface ReservaDAO extends JpaRepository<Reserva, Long> {
 
     @Query("SELECT r FROM Reserva r JOIN r.habitaciones h WHERE h.nombre = :nombreHabitacion " +
             "AND :fecha >= r.fechaIngreso AND :fecha <= r.fechaEgreso")
-    List<Reserva> findReservaPorHabitacionYFecha(@Param("nombreHabitacion") String nombreHabitacion,
-                                                 @Param("fecha") LocalDate fecha);
+    Optional<Reserva> findReservaPorHabitacionYFecha(@Param("nombreHabitacion") String nombreHabitacion,
+                                                     @Param("fecha") LocalDate fecha);
+
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END " +
+            "FROM Reserva r JOIN r.habitaciones h " +
+            "WHERE h.id = :idHabitacion " +
+            "AND r.fechaIngreso < :fechaEgreso " +
+            "AND r.fechaEgreso > :fechaIngreso")
+    boolean existeSolapamiento(@Param("idHabitacion") Long idHabitacion,
+                               @Param("fechaIngreso") LocalDate fechaIngreso,
+                               @Param("fechaEgreso") LocalDate fechaEgreso);
+
+    @Query("SELECT r FROM Reserva r JOIN r.habitaciones h " +
+            "WHERE h.id = :idHabitacion " +
+            "AND r.fechaIngreso < :fechaEgreso " +
+            "AND r.fechaEgreso > :fechaIngreso")
+    Optional<Reserva> findReservaConflictiva(@Param("idHabitacion") Long idHabitacion,
+                                             @Param("fechaIngreso") LocalDate fechaIngreso,
+                                             @Param("fechaEgreso") LocalDate fechaEgreso);
 }

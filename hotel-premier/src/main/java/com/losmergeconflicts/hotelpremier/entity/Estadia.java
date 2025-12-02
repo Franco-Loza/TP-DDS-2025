@@ -1,6 +1,5 @@
 package com.losmergeconflicts.hotelpremier.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,9 +35,6 @@ public class Estadia {
     private LocalDateTime fechaHoraIngreso;
 
     private LocalDateTime fechaHoraEgreso;
-
-    @Column(name = "fecha_egreso_esperado")
-    private LocalDate fechaEgresoEsperado;
 
     @ManyToOne
     @JoinColumn(name = "huesped_id", nullable = false)

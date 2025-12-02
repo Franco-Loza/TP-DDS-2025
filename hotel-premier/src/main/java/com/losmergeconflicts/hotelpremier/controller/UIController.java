@@ -2,6 +2,7 @@ package com.losmergeconflicts.hotelpremier.controller;
 
 import com.losmergeconflicts.hotelpremier.dto.ConserjeDTORequest;
 
+import com.losmergeconflicts.hotelpremier.entity.TipoHabitacion;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -213,6 +214,62 @@ public class UIController {
     public String mostrarFormularioOcuparHabitacion(Model model) {
         log.debug("Mostrando formulario de ocupación de habitación");
         return "habitacion-ocupar";
+    }
+
+    @Operation(summary = "Mostrar estado de habitaciones",
+            description = "Muestra la grilla. El botón cambia entre RESERVAR y OCUPAR.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Vista mostrada"),
+                    @ApiResponse(responseCode = "401", description = "No autenticado")
+            })
+    @GetMapping("/habitacion/estado")
+    public String mostrarEstadoHabitaciones(
+            @RequestParam(name = "contexto", defaultValue = "reservar") String contexto,
+            Model model) {
+
+        log.info("UI: Estado Habitaciones. Contexto: {}", contexto);
+
+        model.addAttribute("contexto", contexto); // Pasa 'reservar' u 'ocupar'
+        model.addAttribute("tiposHabitacion", TipoHabitacion.values());
+
+        String textoBoton = "reservar".equalsIgnoreCase(contexto) ? "RESERVAR" : "OCUPAR";
+        model.addAttribute("textoBoton", textoBoton);
+
+        return "estado-habitaciones";
+    }
+
+    /**
+     * Muestra la vista de confirmación de reserva.
+     *
+     * @return nombre de la vista de confirmación de reserva
+     */
+    @Operation(summary = "Mostrar confirmación de reserva",
+            description = "Renderiza la página HTML para confirmar los datos de la reserva antes de completarla.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Vista mostrada"),
+                    @ApiResponse(responseCode = "401", description = "No autenticado")
+            })
+    @GetMapping("/reserva/confirmar")
+    public String confirmarReserva() {
+        log.info("UI: Confirmación de Reserva");
+        return "confirmar-reserva";
+    }
+
+    /**
+     * Muestra la vista para ingresar los datos del huésped de la reserva.
+     *
+     * @return nombre de la vista de datos del huésped
+     */
+    @Operation(summary = "Mostrar formulario de datos del huésped",
+            description = "Renderiza la página HTML para completar los datos del huésped responsable de la reserva.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Vista mostrada"),
+                    @ApiResponse(responseCode = "401", description = "No autenticado")
+            })
+    @GetMapping("/reserva/datos-huesped")
+    public String datosHuespedReserva() {
+        log.info("UI: Datos de Huésped para Reserva");
+        return "reserva-datos-huesped";
     }
 
 }

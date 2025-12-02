@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,17 +51,17 @@ public class HabitacionController {
 
     /**
      * Listar habitaciones por IDs
-     *
+     * 
      * @param idsHabitaciones
      * @return ResponseEntity con la lista de habitaciones encontradas
      */
     @Operation(summary = "Listar habitaciones por IDs",
-            description = "Permite listar habitaciones filtradas por sus IDs.",
-            responses = {
+                description = "Permite listar habitaciones filtradas por sus IDs.",
+                responses = {
                     @ApiResponse(responseCode = "200", description = "Habitaciones listadas correctamente"),
                     @ApiResponse(responseCode = "400", description = "Error de validación en los datos"),
                     @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-            })
+                })
     @GetMapping("/listar-por-ids")
     public ResponseEntity<List<HabitacionDTOResponse>> listarHabitacionesPorID(
             @RequestParam("ids") List<Long> idsHabitaciones) {
@@ -68,3 +69,4 @@ public class HabitacionController {
         return ResponseEntity.ok(habitaciones);
     }
 }
+
