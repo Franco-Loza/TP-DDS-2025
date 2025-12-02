@@ -974,4 +974,566 @@ public class GestorPersonasImpTest {
         verify(huespedDAO, never()).existsByTipoDocumentoAndDocumento(any(), any());
         verify(huespedDAO, never()).save(any(Huesped.class));
     }
+
+    // ============================================================================
+    // TESTS PARA buscarHuespedes()
+    // ============================================================================
+
+    /**
+     * CAMINO FELIZ: Búsqueda con todos los criterios y múltiples resultados.
+     * 
+     * Escenario:
+     * - Se envían todos los criterios de búsqueda (apellido, nombre, tipoDoc, nroDoc)
+     * - Se encuentran múltiples huéspedes en BD
+     * 
+     * Resultado esperado:
+     * - Se llama al DAO con todos los criterios
+     * - Se retorna lista de DTOs mapeados desde las entidades
+     * - La lista contiene todos los huéspedes encontrados
+     */
+    @Test
+    void testBuscarHuespedes_TodosCriterios_MultipleResultados() {
+        // --- ARRANGE ---
+        
+        String apellido = "Pérez";
+        String nombre = "Juan";
+        TipoDocumento tipoDoc = TipoDocumento.DNI;
+        String nroDoc = "12345678";
+
+        // Datos esperados en el DAO.
+        String apellidoSanitizado = "PÉREZ";
+        String nombreSanitizado = "JUAN";
+
+        // Crear huéspedes de prueba
+        Huesped huesped1 = new Huesped();
+        huesped1.setId(1L);
+        huesped1.setNombre("Juan");
+        huesped1.setApellido("Pérez");
+        huesped1.setTipoDocumento(TipoDocumento.DNI);
+        huesped1.setDocumento("12345678");
+        huesped1.setEmail("juan@email.com");
+        
+        Huesped huesped2 = new Huesped();
+        huesped2.setId(2L);
+        huesped2.setNombre("Juan Carlos");
+        huesped2.setApellido("Pérez");
+        huesped2.setTipoDocumento(TipoDocumento.DNI);
+        huesped2.setDocumento("12345679");
+        huesped2.setEmail("juancarlos@email.com");
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList(huesped1, huesped2);
+        
+        // Crear DTOs de respuesta esperados
+        HuespedDTOResponse response1 = new HuespedDTOResponse(
+                1L, "20-12345678-9", "1234567890", "Info", "Calle", "123", "1", "A", "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "Juan", "Pérez", TipoDocumento.DNI, "12345678", LocalDate.of(1990, 1, 1),
+                "juan@email.com", "Ingeniero", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        HuespedDTOResponse response2 = new HuespedDTOResponse(
+                2L, "20-12345679-9", "1234567891", "Info", "Calle", "124", "2", "B", "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "Juan Carlos", "Pérez", TipoDocumento.DNI, "12345679", LocalDate.of(1985, 5, 10),
+                "juancarlos@email.com", "Médico", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        // Simular respuesta del DAO
+        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, tipoDoc, nroDoc))
+                .thenReturn(huespedesEncontrados);
+        
+        // Simular mapper
+        when(huespedMapper.toResponse(huesped1)).thenReturn(response1);
+        when(huespedMapper.toResponse(huesped2)).thenReturn(response2);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(apellido, nombre, tipoDoc, nroDoc);
+        
+        // --- ASSERT ---
+        
+        // Verificar que el resultado no sea nulo
+        assertNotNull(resultado);
+        
+        // Verificar cantidad de resultados
+        assertEquals(2, resultado.size());
+        
+        // Verificar contenido
+        assertEquals("Juan", resultado.get(0).nombre());
+        assertEquals("Pérez", resultado.get(0).apellido());
+        assertEquals("Juan Carlos", resultado.get(1).nombre());
+        assertEquals("Pérez", resultado.get(1).apellido());
+        
+        // Verificar interacciones con los mocks
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, tipoDoc, nroDoc);
+        verify(huespedMapper, times(1)).toResponse(huesped1);
+        verify(huespedMapper, times(1)).toResponse(huesped2);
+    }
+
+    /**
+     * CAMINO FELIZ: Búsqueda solo por apellido con un resultado.
+     * 
+     * Escenario:
+     * - Se envía solo el apellido como criterio (otros criterios son null)
+     * - Se encuentra un único huésped en BD
+     * 
+     * Resultado esperado:
+     * - Se llama al DAO con apellido y otros criterios en null
+     * - Se retorna lista con un DTO mapeado
+     */
+    @Test
+    void testBuscarHuespedes_SoloApellido_UnResultado() {
+        // --- ARRANGE ---
+        
+        String apellido = "García";
+
+        String apellidoSanitizado = "GARCÍA";
+
+        Huesped huesped = new Huesped();
+        huesped.setId(3L);
+        huesped.setNombre("María");
+        huesped.setApellido("García");
+        huesped.setTipoDocumento(TipoDocumento.DNI);
+        huesped.setDocumento("87654321");
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList(huesped);
+        
+        HuespedDTOResponse response = new HuespedDTOResponse(
+                3L, "27-87654321-4", "1122334455", "Info", "Avenida", "456", null, null, "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "María", "García", TipoDocumento.DNI, "87654321", LocalDate.of(1992, 3, 15),
+                "maria@email.com", "Contadora", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, null, null, null))
+                .thenReturn(huespedesEncontrados);
+        when(huespedMapper.toResponse(huesped)).thenReturn(response);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(apellido, null, null, null);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals("María", resultado.get(0).nombre());
+        assertEquals("García", resultado.get(0).apellido());
+        
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, null, null, null);
+        verify(huespedMapper, times(1)).toResponse(huesped);
+    }
+
+    /**
+     * CAMINO FELIZ: Búsqueda solo por nombre con múltiples resultados.
+     * 
+     * Escenario:
+     * - Se envía solo el nombre como criterio
+     * - Se encuentran múltiples huéspedes en BD
+     * 
+     * Resultado esperado:
+     * - Se llama al DAO con nombre y otros criterios en null
+     * - Se retorna lista con múltiples DTOs
+     */
+    @Test
+    void testBuscarHuespedes_SoloNombre_MultipleResultados() {
+        // --- ARRANGE ---
+        
+        String nombre = "Carlos";
+
+        String nombreSanitizado = "CARLOS";
+
+        Huesped huesped1 = new Huesped();
+        huesped1.setId(4L);
+        huesped1.setNombre("Carlos");
+        huesped1.setApellido("López");
+        
+        Huesped huesped2 = new Huesped();
+        huesped2.setId(5L);
+        huesped2.setNombre("Carlos Alberto");
+        huesped2.setApellido("Martínez");
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList(huesped1, huesped2);
+        
+        HuespedDTOResponse response1 = new HuespedDTOResponse(
+                4L, "20-11111111-1", "1111111111", "Info", "Calle", "100", null, null, "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "Carlos", "López", TipoDocumento.DNI, "11111111", LocalDate.of(1988, 7, 20),
+                "carlos.lopez@email.com", "Abogado", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        HuespedDTOResponse response2 = new HuespedDTOResponse(
+                5L, "20-22222222-2", "2222222222", "Info", "Calle", "200", null, null, "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "Carlos Alberto", "Martínez", TipoDocumento.DNI, "22222222", LocalDate.of(1991, 9, 5),
+                "carlos.martinez@email.com", "Arquitecto", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(null, nombreSanitizado, null, null))
+                .thenReturn(huespedesEncontrados);
+        when(huespedMapper.toResponse(huesped1)).thenReturn(response1);
+        when(huespedMapper.toResponse(huesped2)).thenReturn(response2);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(null, nombre, null, null);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertEquals(2, resultado.size());
+        assertEquals("Carlos", resultado.get(0).nombre());
+        assertEquals("Carlos Alberto", resultado.get(1).nombre());
+        
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, nombreSanitizado, null, null);
+        verify(huespedMapper, times(2)).toResponse(any(Huesped.class));
+    }
+
+    /**
+     * CAMINO FELIZ: Búsqueda solo por tipo y número de documento.
+     * 
+     * Escenario:
+     * - Se envía solo tipoDoc y nroDoc como criterios
+     * - Se encuentra un único huésped en BD
+     * 
+     * Resultado esperado:
+     * - Se llama al DAO con tipoDoc y nroDoc
+     * - Se retorna lista con un DTO
+     */
+    @Test
+    void testBuscarHuespedes_SoloTipoYNumeroDocumento_UnResultado() {
+        // --- ARRANGE ---
+        
+        TipoDocumento tipoDoc = TipoDocumento.PASAPORTE;
+        String nroDoc = "ABC123456";
+
+        String nroDocSanitizado = "123456";
+
+        Huesped huesped = new Huesped();
+        huesped.setId(6L);
+        huesped.setNombre("John");
+        huesped.setApellido("Smith");
+        huesped.setTipoDocumento(TipoDocumento.PASAPORTE);
+        huesped.setDocumento("ABC123456");
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList(huesped);
+        
+        HuespedDTOResponse response = new HuespedDTOResponse(
+                6L, null, "5551234567", "Foreign guest", "Street", "789", null, null, "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "John", "Smith", TipoDocumento.PASAPORTE, "ABC123456", LocalDate.of(1985, 12, 1),
+                "john.smith@email.com", "Engineer", PosicionFrenteAlIVA.CONSUMIDOR_FINAL,
+                2L, "Estados Unidos"
+        );
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(null, null, tipoDoc, nroDocSanitizado))
+                .thenReturn(huespedesEncontrados);
+        when(huespedMapper.toResponse(huesped)).thenReturn(response);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(null, null, tipoDoc, nroDoc);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals("John", resultado.get(0).nombre());
+        assertEquals("Smith", resultado.get(0).apellido());
+        assertEquals(TipoDocumento.PASAPORTE, resultado.get(0).tipoDocumento());
+        assertEquals("ABC123456", resultado.get(0).documento());
+        
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, null, tipoDoc, nroDocSanitizado);
+        verify(huespedMapper, times(1)).toResponse(huesped);
+    }
+
+    /**
+     * CASO LÍMITE: Búsqueda sin criterios (todos null).
+     * 
+     * Escenario:
+     * - Se llama al método con todos los criterios en null
+     * - El DAO puede retornar todos los huéspedes o una lista vacía según implementación
+     * 
+     * Resultado esperado:
+     * - Se llama al DAO con todos los parámetros en null
+     * - Se retorna una lista (puede ser vacía o con todos los registros)
+     */
+    @Test
+    void testBuscarHuespedes_SinCriterios_ListaVacia() {
+        // --- ARRANGE ---
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList();
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(null, null, null, null))
+                .thenReturn(huespedesEncontrados);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(null, null, null, null);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertEquals(0, resultado.size());
+        
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, null, null, null);
+        verify(huespedMapper, never()).toResponse(any(Huesped.class));
+    }
+
+    /**
+     * CASO LÍMITE: Búsqueda sin resultados.
+     * 
+     * Escenario:
+     * - Se envían criterios válidos
+     * - El DAO no encuentra ningún huésped que coincida
+     * 
+     * Resultado esperado:
+     * - Se retorna lista vacía (no null)
+     * - No se llama al mapper
+     */
+    @Test
+    void testBuscarHuespedes_ConCriterios_SinResultados() {
+        // --- ARRANGE ---
+        
+        String apellido = "NoExiste";
+        String nombre = "Nadie";
+
+        String apellidoSanitizado = "NOEXISTE";
+        String nombreSanitizado = "NADIE";
+
+        List<Huesped> huespedesEncontrados = Arrays.asList();
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, null, null))
+                .thenReturn(huespedesEncontrados);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(apellido, nombre, null, null);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, null, null);
+        verify(huespedMapper, never()).toResponse(any(Huesped.class));
+    }
+
+    /**
+     * CASO COMBINADO: Búsqueda por apellido y tipo de documento.
+     * 
+     * Escenario:
+     * - Se envían solo apellido y tipoDoc
+     * - Se encuentran múltiples huéspedes con diferentes tipos de documento
+     * 
+     * Resultado esperado:
+     * - Se llama al DAO con los criterios especificados
+     * - Se retorna lista filtrada
+     */
+    @Test
+    void testBuscarHuespedes_ApellidoYTipoDocumento_MultipleResultados() {
+        // --- ARRANGE ---
+        
+        String apellido = "Rodríguez";
+        TipoDocumento tipoDoc = TipoDocumento.DNI;
+
+        String apellidoSanitizado = "RODRÍGUEZ";
+
+        Huesped huesped1 = new Huesped();
+        huesped1.setId(7L);
+        huesped1.setNombre("Ana");
+        huesped1.setApellido("Rodríguez");
+        huesped1.setTipoDocumento(TipoDocumento.DNI);
+        huesped1.setDocumento("33333333");
+        
+        Huesped huesped2 = new Huesped();
+        huesped2.setId(8L);
+        huesped2.setNombre("Luis");
+        huesped2.setApellido("Rodríguez");
+        huesped2.setTipoDocumento(TipoDocumento.DNI);
+        huesped2.setDocumento("44444444");
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList(huesped1, huesped2);
+        
+        HuespedDTOResponse response1 = new HuespedDTOResponse(
+                7L, "27-33333333-3", "3333333333", "Info", "Calle", "300", null, null, "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "Ana", "Rodríguez", TipoDocumento.DNI, "33333333", LocalDate.of(1995, 4, 10),
+                "ana.rodriguez@email.com", "Diseñadora", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        HuespedDTOResponse response2 = new HuespedDTOResponse(
+                8L, "20-44444444-4", "4444444444", "Info", "Calle", "400", null, null, "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "Luis", "Rodríguez", TipoDocumento.DNI, "44444444", LocalDate.of(1987, 11, 25),
+                "luis.rodriguez@email.com", "Profesor", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, null, tipoDoc, null))
+                .thenReturn(huespedesEncontrados);
+        when(huespedMapper.toResponse(huesped1)).thenReturn(response1);
+        when(huespedMapper.toResponse(huesped2)).thenReturn(response2);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(apellido, null, tipoDoc, null);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertEquals(2, resultado.size());
+        assertEquals("Rodríguez", resultado.get(0).apellido());
+        assertEquals("Rodríguez", resultado.get(1).apellido());
+        assertEquals(TipoDocumento.DNI, resultado.get(0).tipoDocumento());
+        assertEquals(TipoDocumento.DNI, resultado.get(1).tipoDocumento());
+        
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, null, tipoDoc, null);
+        verify(huespedMapper, times(2)).toResponse(any(Huesped.class));
+    }
+
+    /**
+     * CASO COMBINADO: Búsqueda por nombre y número de documento.
+     * 
+     * Escenario:
+     * - Se envían solo nombre y nroDoc
+     * - Se encuentra un huésped
+     * 
+     * Resultado esperado:
+     * - Se llama al DAO con los criterios especificados
+     * - Se retorna lista con un elemento
+     */
+    @Test
+    void testBuscarHuespedes_NombreYNumeroDocumento_UnResultado() {
+        // --- ARRANGE ---
+        
+        String nombre = "Pedro";
+        String nroDoc = "55555555";
+
+        String nombreSanitizado = "PEDRO";
+        
+        Huesped huesped = new Huesped();
+        huesped.setId(9L);
+        huesped.setNombre("Pedro");
+        huesped.setApellido("González");
+        huesped.setTipoDocumento(TipoDocumento.DNI);
+        huesped.setDocumento("55555555");
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList(huesped);
+        
+        HuespedDTOResponse response = new HuespedDTOResponse(
+                9L, "20-55555555-5", "5555555555", "Info", "Calle", "500", null, null, "1900",
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "Pedro", "González", TipoDocumento.DNI, "55555555", LocalDate.of(1993, 6, 30),
+                "pedro.gonzalez@email.com", "Comerciante", PosicionFrenteAlIVA.RESPONSABLE_INSCRIPTO,
+                1L, "Argentina"
+        );
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(null, nombreSanitizado, null, nroDoc))
+                .thenReturn(huespedesEncontrados);
+        when(huespedMapper.toResponse(huesped)).thenReturn(response);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(null, nombre, null, nroDoc);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertEquals(1, resultado.size());
+        assertEquals("Pedro", resultado.get(0).nombre());
+        assertEquals("55555555", resultado.get(0).documento());
+        
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, nombreSanitizado, null, nroDoc);
+        verify(huespedMapper, times(1)).toResponse(huesped);
+    }
+
+    /**
+     * VERIFICACIÓN: El mapper se llama para cada huésped encontrado.
+     * 
+     * Escenario:
+     * - Búsqueda con múltiples resultados
+     * 
+     * Resultado esperado:
+     * - El mapper se invoca una vez por cada huésped
+     * - La lista resultante contiene los DTOs en el orden correcto
+     */
+    @Test
+    void testBuscarHuespedes_MapperSeLlamaPorCadaHuesped() {
+        // --- ARRANGE ---
+        
+        String apellido = "Test";
+
+        String apellidoSanitizado = "TEST";
+        
+        Huesped huesped1 = new Huesped();
+        huesped1.setId(10L);
+        huesped1.setApellido("Test");
+        
+        Huesped huesped2 = new Huesped();
+        huesped2.setId(11L);
+        huesped2.setApellido("Test");
+        
+        Huesped huesped3 = new Huesped();
+        huesped3.setId(12L);
+        huesped3.setApellido("Test");
+        
+        List<Huesped> huespedesEncontrados = Arrays.asList(huesped1, huesped2, huesped3);
+        
+        HuespedDTOResponse response1 = new HuespedDTOResponse(
+                10L, null, null, null, null, null, null, null, null,
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "A", "Test", TipoDocumento.DNI, "10000000", LocalDate.now(),
+                "a@test.com", "Test", PosicionFrenteAlIVA.CONSUMIDOR_FINAL,
+                1L, "Argentina"
+        );
+        
+        HuespedDTOResponse response2 = new HuespedDTOResponse(
+                11L, null, null, null, null, null, null, null, null,
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "B", "Test", TipoDocumento.DNI, "11000000", LocalDate.now(),
+                "b@test.com", "Test", PosicionFrenteAlIVA.CONSUMIDOR_FINAL,
+                1L, "Argentina"
+        );
+        
+        HuespedDTOResponse response3 = new HuespedDTOResponse(
+                12L, null, null, null, null, null, null, null, null,
+                1L, "La Plata", 1L, "Buenos Aires", 1L, "Argentina",
+                "C", "Test", TipoDocumento.DNI, "12000000", LocalDate.now(),
+                "c@test.com", "Test", PosicionFrenteAlIVA.CONSUMIDOR_FINAL,
+                1L, "Argentina"
+        );
+        
+        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, null, null, null))
+                .thenReturn(huespedesEncontrados);
+        when(huespedMapper.toResponse(huesped1)).thenReturn(response1);
+        when(huespedMapper.toResponse(huesped2)).thenReturn(response2);
+        when(huespedMapper.toResponse(huesped3)).thenReturn(response3);
+        
+        // --- ACT ---
+        
+        List<HuespedDTOResponse> resultado = gestorPersonas.buscarHuespedes(apellido, null, null, null);
+        
+        // --- ASSERT ---
+        
+        assertNotNull(resultado);
+        assertEquals(3, resultado.size());
+        
+        // Verificar orden
+        assertEquals(10L, resultado.get(0).id());
+        assertEquals(11L, resultado.get(1).id());
+        assertEquals(12L, resultado.get(2).id());
+        
+        // Verificar que el mapper fue llamado exactamente 3 veces, una por cada huésped
+        verify(huespedMapper, times(1)).toResponse(huesped1);
+        verify(huespedMapper, times(1)).toResponse(huesped2);
+        verify(huespedMapper, times(1)).toResponse(huesped3);
+        verify(huespedMapper, times(3)).toResponse(any(Huesped.class));
+    }
 }

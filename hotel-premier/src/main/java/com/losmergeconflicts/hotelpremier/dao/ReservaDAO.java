@@ -20,6 +20,6 @@ public interface ReservaDAO extends JpaRepository<Reserva, Long> {
 
     @Query("SELECT r FROM Reserva r JOIN r.habitaciones h WHERE h.nombre = :nombreHabitacion " +
             "AND :fecha >= r.fechaIngreso AND :fecha <= r.fechaEgreso")
-    Optional<Reserva> findReservaPorHabitacionYFecha(@Param("nombreHabitacion") String nombreHabitacion,
-                                                     @Param("fecha") LocalDate fecha);
+    List<Reserva> findReservaPorHabitacionYFecha(@Param("nombreHabitacion") String nombreHabitacion,
+                                                 @Param("fecha") LocalDate fecha);
 }

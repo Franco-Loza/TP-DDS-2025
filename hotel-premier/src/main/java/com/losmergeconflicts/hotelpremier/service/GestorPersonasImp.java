@@ -28,16 +28,16 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Implementación del servicio de personas.
- * 
+ *
  * Esta clase contiene toda la lógica de negocio relacionada con
  * la gestión de personas.
- * 
+ *
  * @Slf4j: Genera automáticamente un logger para la clase
  */
 @Service
 @Slf4j
 public class GestorPersonasImp implements GestorPersonas {
-    
+
     private final HuespedDAO huespedDAO;
     private final HuespedMapper huespedMapper;
     private final DireccionDAO direccionDAO;
@@ -48,7 +48,7 @@ public class GestorPersonasImp implements GestorPersonas {
 
     /**
      * Constructor con inyección de dependencias.
-     * 
+     *
      * @param huespedDAO DAO para operaciones con Huesped
      * @param huespedMapper mapper para conversión entre DTOs y entidades
      * @param direccionDAO DAO para operaciones con Direccion
@@ -58,13 +58,13 @@ public class GestorPersonasImp implements GestorPersonas {
      * @param nacionalidadMapper mapper para conversión de Nacionalidad a DTO
      */
     @Autowired
-    public GestorPersonasImp(HuespedDAO huespedDAO, 
-                            HuespedMapper huespedMapper,
-                            DireccionDAO direccionDAO,
-                            LocalidadDAO localidadDAO,
-                            NacionalidadDAO nacionalidadDAO,
-                            LocalidadMapper localidadMapper,
-                            NacionalidadMapper nacionalidadMapper) {
+    public GestorPersonasImp(HuespedDAO huespedDAO,
+                             HuespedMapper huespedMapper,
+                             DireccionDAO direccionDAO,
+                             LocalidadDAO localidadDAO,
+                             NacionalidadDAO nacionalidadDAO,
+                             LocalidadMapper localidadMapper,
+                             NacionalidadMapper nacionalidadMapper) {
         this.huespedDAO = huespedDAO;
         this.huespedMapper = huespedMapper;
         this.direccionDAO = direccionDAO;
@@ -77,7 +77,7 @@ public class GestorPersonasImp implements GestorPersonas {
     /**
      * Registra un nuevo huésped en el sistema (sin permitir duplicados).
      * Delega al método sobrecargado con permitirDuplicados = false.
-     * 
+     *
      * @param request DTO con los datos del huésped (ya validados por @Valid)
      * @return DTO de respuesta con los datos del huésped registrado
      * @throws IllegalArgumentException si el documento ya existe o si no se encuentran las entidades relacionadas
@@ -90,7 +90,7 @@ public class GestorPersonasImp implements GestorPersonas {
 
     /**
      * Registra un nuevo huésped en el sistema.
-     * 
+     *
      * Proceso:
      * 1. Valida que el documento no exista (si permitirDuplicados es false)
      * 2. Busca y valida las entidades relacionadas (Localidad, Nacionalidad)
@@ -99,7 +99,7 @@ public class GestorPersonasImp implements GestorPersonas {
      * 5. Asigna las entidades relacionadas
      * 6. Guarda el huésped en base de datos
      * 7. Convierte la entidad guardada a DTO de respuesta
-     * 
+     *
      * @param request DTO con los datos del huésped (ya validados por @Valid)
      * @param permitirDuplicados si es true, permite registrar huéspedes con tipo y documento duplicado
      * @return DTO de respuesta con los datos del huésped registrado
@@ -115,61 +115,61 @@ public class GestorPersonasImp implements GestorPersonas {
             throw new IllegalArgumentException("Los datos del huésped no pueden ser nulos");
         }
 
-        log.info("Intentando dar de alta nuevo huésped con documento: {} {}", 
+        log.info("Intentando dar de alta nuevo huésped con documento: {} {}",
                 request.tipoDocumento(), request.documento());
 
         // Validar que la combinación de tipo de documento y documento no exista
         if (huespedDAO.existsByTipoDocumentoAndDocumento(request.tipoDocumento(), request.documento()) && !permitirDuplicados) {
-            log.warn("Intento de alta con tipo y número de documento existentes: {} {}", 
+            log.warn("Intento de alta con tipo y número de documento existentes: {} {}",
                     request.tipoDocumento(), request.documento());
             throw new IllegalArgumentException(
-                "¡CUIDADO! El tipo y número de documento ya existen en el sistema.");
+                    "¡CUIDADO! El tipo y número de documento ya existen en el sistema.");
         }
-        
+
         try {
             // 1. Buscar y validar Nacionalidad
             Nacionalidad nacionalidad = nacionalidadDAO.findById(request.nacionalidadId())
-                .orElseThrow(() -> {
-                    log.error("Nacionalidad no encontrada con ID: {}", request.nacionalidadId());
-                    return new IllegalArgumentException("La nacionalidad especificada no existe");
-                });
+                    .orElseThrow(() -> {
+                        log.error("Nacionalidad no encontrada con ID: {}", request.nacionalidadId());
+                        return new IllegalArgumentException("La nacionalidad especificada no existe");
+                    });
 
             // 2. Buscar y validar Localidad
             Localidad localidad = localidadDAO.findById(request.localidadId())
-                .orElseThrow(() -> {
-                    log.error("Localidad no encontrada con ID: {}", request.localidadId());
-                    return new IllegalArgumentException("La localidad especificada no existe");
-                });
-            
+                    .orElseThrow(() -> {
+                        log.error("Localidad no encontrada con ID: {}", request.localidadId());
+                        return new IllegalArgumentException("La localidad especificada no existe");
+                    });
+
             // 3. Crear y guardar Direccion
             Direccion direccion = Direccion.builder()
-                .calle(request.calle())
-                .numero(request.numero())
-                .piso(request.piso())
-                .departamento(request.departamento())
-                .codigoPostal(request.codigoPostal())
-                .localidad(localidad)
-                .build();
-            
+                    .calle(request.calle())
+                    .numero(request.numero())
+                    .piso(request.piso())
+                    .departamento(request.departamento())
+                    .codigoPostal(request.codigoPostal())
+                    .localidad(localidad)
+                    .build();
+
             Direccion direccionGuardada = direccionDAO.save(direccion);
             log.debug("Dirección guardada con ID: {}", direccionGuardada.getId());
-            
+
             // 4. Convertir DTO a entidad usando MapStruct
             Huesped nuevoHuesped = huespedMapper.toEntity(request);
-            
+
             // 5. Asignar las entidades relacionadas
             nuevoHuesped.setDireccion(direccionGuardada);
             nuevoHuesped.setNacionalidad(nacionalidad);
-            
+
             // 6. Guardar en base de datos
             Huesped huespedGuardado = huespedDAO.save(nuevoHuesped);
-            
-            log.info("Huésped dado de alta exitosamente con ID: {} - Documento: {}", 
+
+            log.info("Huésped dado de alta exitosamente con ID: {} - Documento: {}",
                     huespedGuardado.getId(), request.documento());
-            
+
             // 7. Convertir entidad guardada a DTO de respuesta
             return huespedMapper.toResponse(huespedGuardado);
-            
+
         } catch (IllegalArgumentException e) {
             // Re-lanzar excepciones de validación
             throw e;
@@ -181,7 +181,7 @@ public class GestorPersonasImp implements GestorPersonas {
 
     /**
      * Verifica si un tipo y número de documento ya están registrados.
-     * 
+     *
      * @param tipoDocumento tipo de documento (DNI, PASAPORTE, etc.)
      * @param documento número de documento a verificar
      * @return true si el tipo y documento existen, false si no
@@ -194,18 +194,18 @@ public class GestorPersonasImp implements GestorPersonas {
 
     /**
      * Obtiene todas las localidades disponibles en el sistema.
-     * 
+     *
      * @return lista de DTOs con todas las localidades (incluye provincia y país anidados)
      */
     @Override
     @Transactional(readOnly = true)
     public List<LocalidadDTO> listarLocalidades() {
         log.info("Listando todas las localidades");
-        
+
         List<Localidad> localidades = localidadDAO.findAll();
-        
+
         log.debug("Se encontraron {} localidades", localidades.size());
-        
+
         return localidades.stream()
                 .map(localidadMapper::toDTO)
                 .collect(Collectors.toList());
@@ -213,20 +213,63 @@ public class GestorPersonasImp implements GestorPersonas {
 
     /**
      * Obtiene todas las nacionalidades disponibles en el sistema.
-     * 
+     *
      * @return lista de DTOs con todas las nacionalidades
      */
     @Override
     @Transactional(readOnly = true)
     public List<NacionalidadDTO> listarNacionalidades() {
         log.info("Listando todas las nacionalidades");
-        
+
         List<Nacionalidad> nacionalidades = nacionalidadDAO.findAll();
-        
+
         log.debug("Se encontraron {} nacionalidades", nacionalidades.size());
-        
+
         return nacionalidades.stream()
                 .map(nacionalidadMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Busca huéspedes en el sistema según múltiples criterios.
+     *
+     * Proceso (mapeado al Diagrama de Secuencia):
+     * 1. Sanitiza los criterios de entrada (Mayúsculas, solo números, etc.)
+     * 2. Llama al HuespedDAO con los criterios (llamada a HuespedDAOImp)
+     * 3. Recibe la lista de entidades Huesped
+     * 4. Mapea la lista de Huesped a HuespedDTOResponse (el "loop" del diagrama)
+     * 5. Retorna la lista de DTOs
+     *
+     * @param apellido Criterio de búsqueda por apellido
+     * @param nombre Criterio de búsqueda por nombre
+     * @param tipoDoc Criterio de búsqueda por tipo de documento
+     * @param nroDoc Criterio de búsqueda por número de documento
+     * @return Lista de DTOs de huéspedes encontrados
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<HuespedDTOResponse> buscarHuespedes(String apellido, String nombre, TipoDocumento tipoDoc, String nroDoc) {
+
+        if (apellido != null) {
+            apellido = apellido.toUpperCase().replaceAll("[^A-ZÑÁÉÍÓÚÜ ]", "");
+        }
+        if (nombre != null) {
+            nombre = nombre.toUpperCase().replaceAll("[^A-ZÑÁÉÍÓÚÜ ]", "");
+        }
+        if (nroDoc != null) {
+            nroDoc = nroDoc.replaceAll("[^0-9]", "");
+        }
+
+        log.info("Iniciando búsqueda de huéspedes con criterios: Apellido [{}], Nombre [{}], TipoDoc [{}], NroDoc [{}]",
+                apellido, nombre, tipoDoc, nroDoc);
+
+        List<Huesped> huespedesEncontrados = huespedDAO.buscarHuespedesPorCriterios(apellido, nombre, tipoDoc, nroDoc);
+
+        log.debug("Se encontraron {} huéspedes", huespedesEncontrados.size());
+
+        return huespedesEncontrados.stream()
+                .map(huespedMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
 }

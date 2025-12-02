@@ -107,8 +107,7 @@
             text-transform: uppercase;
         }
 
-        .form-group input,
-        .form-group select {
+        .form-group input, .form-group select {
             padding: 7px 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -117,14 +116,12 @@
             background: white;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
+        .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        /* Estilo para inputs inválidos */
         .form-group input:invalid {
             border-color: #dc3545;
             box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
@@ -219,6 +216,60 @@
             }
         }
 
+        .results-table th {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .results-table th:hover {
+            background-color: #e2e6ea;
+        }
+
+        .results-table th:first-child {
+            cursor: default;
+        }
+
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 1.1em;
+            color: #ccc;
+            font-weight: normal;
+            vertical-align: middle;
+        }
+
+        .results-table th:hover .sort-icon {
+            color: #999;
+        }
+
+        .confirmation-dialog {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center; align-items: center;
+            z-index: 10000;
+        }
+
+        .confirmation-dialog.active { display: flex; }
+
+        .confirmation-content {
+            background: white; border-radius: 8px; padding: 30px;
+            max-width: 400px; width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); text-align: center;
+        }
+
+        .confirmation-content h3 {
+            color: #d97706;
+            margin: 0 0 15px 0; font-size: 20px; font-weight: bold;
+        }
+
+        .confirmation-content p {
+            color: #555; font-size: 15px; margin-bottom: 25px;
+        }
+
+        .confirmation-buttons {
+            display: flex; justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -246,76 +297,87 @@
         <form id="formBusqueda" class="content-body" th:action="@{/huesped/seleccionar}" method="post">
 
             <div class="form-grid">
-
                 <div class="form-group">
                     <label>APELLIDO</label>
                     <input type="text" id="apellido" name="apellido"
-                           pattern="[A-ZÑ ]*"
-                           title="Solo se permiten letras mayúsculas, espacios y Ñ"
-                           oninput="this.value = this.value.toUpperCase().replace(/[^A-ZÑ ]/g, '')">
+                           maxlength="100"
+                           pattern="[A-ZÑÁÉÍÓÚÜ\s]*"
+                           title="Solo se permiten letras y espacios"
+                           oninput="this.value = this.value.toUpperCase().replace(/[^A-ZÑÁÉÍÓÚÜ\s]/g, '')">
                 </div>
-
                 <div class="form-group">
                     <label>NOMBRES</label>
                     <input type="text" id="nombre" name="nombre"
-                           pattern="[A-ZÑ ]*"
-                           title="Solo se permiten letras mayúsculas, espacios y Ñ"
-                           oninput="this.value = this.value.toUpperCase().replace(/[^A-ZÑ ]/g, '')">
+                           maxlength="100"
+                           pattern="[A-ZÑÁÉÍÓÚÜ\s]*"
+                           title="Solo se permiten letras y espacios"
+                           oninput="this.value = this.value.toUpperCase().replace(/[^A-ZÑÁÉÍÓÚÜ\s]/g, '')">
                 </div>
-
                 <div class="form-group">
                     <label>TIPO DOCUMENTO</label>
                     <select id="tipoDocumento" name="tipoDocumento">
                         <option value="">Todos</option>
                         <option th:each="tipo : ${T(com.losmergeconflicts.hotelpremier.entity.TipoDocumento).values()}"
                                 th:value="${tipo}"
-                                th:text="${tipo}"></option>
+                                th:text="${tipo}"
+                                th:selected="${tipo.name() == 'DNI'}">
+                        </option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label>NÚMERO DOCUMENTO</label>
                     <input type="text" id="documento" name="documento"
+                           maxlength="8"
                            pattern="[0-9]*"
-                           title="Solo se permiten números"
+                           title="Solo se permiten números (máximo 8 dígitos)"
                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                 </div>
             </div>
 
-
             <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+
             <table class="results-table">
                 <thead>
                 <tr>
-                    <th></th> <th>APELLIDO</th>
-                    <th>NOMBRES</th>
-                    <th>TIPO DOCUMENTO</th>
-                    <th>NUMERO DOCUMENTO</th>
+                    <th style="width: 50px;"></th>
+
+                    <th onclick="ordenarResultados('apellido')">
+                        APELLIDO <span id="icon-apellido" class="sort-icon">↕</span>
+                    </th>
+                    <th onclick="ordenarResultados('nombre')">
+                        NOMBRES <span id="icon-nombre" class="sort-icon">↕</span>
+                    </th>
+                    <th onclick="ordenarResultados('tipoDocumento')">
+                        TIPO DOCUMENTO <span id="icon-tipoDocumento" class="sort-icon">↕</span>
+                    </th>
+                    <th onclick="ordenarResultados('documento')">
+                        NUMERO DOCUMENTO <span id="icon-documento" class="sort-icon">↕</span>
+                    </th>
                 </tr>
                 </thead>
-                <tbody id="tablaResultados">
-                    <!-- Los resultados se cargarán dinámicamente aquí -->
-                </tbody>
+                <tbody id="tablaResultados"></tbody>
             </table>
 
             <div id="noResultados" class="no-results" style="display: none;">
                 No se encontraron huéspedes con esos datos.
             </div>
 
-
             <div class="form-actions">
-                <button type="button" id="btnBuscar" class="btn btn-primary">
-                    BUSCAR
-                </button>
-
-                <button type="submit" class="btn btn-primary">
-                    SIGUIENTE
-                </button>
-
+                <button type="button" id="btnBuscar" class="btn btn-primary">BUSCAR</button>
+                <button type="button" id="btnSiguiente" class="btn btn-primary">SIGUIENTE</button>
                 <a th:href="@{/menu-principal}" class="btn btn-secondary">CANCELAR</a>
             </div>
-
         </form>
+    </div>
+</div>
+
+<div id="modalAdvertencia" class="confirmation-dialog">
+    <div class="confirmation-content">
+        <h3>⚠️ Atención</h3>
+        <p>Debe seleccionar un huésped de la lista para continuar.</p>
+        <div class="confirmation-buttons">
+            <button type="button" class="btn btn-primary" onclick="cerrarModalAdvertencia()">ENTENDIDO</button>
+        </div>
     </div>
 </div>
 
@@ -324,61 +386,114 @@
         const btnBuscar = document.getElementById('btnBuscar');
         const tablaResultados = document.getElementById('tablaResultados');
         const noResultados = document.getElementById('noResultados');
+        const btnSiguiente = document.getElementById('btnSiguiente');
+
+        let resultadosGlobales = [];
+        let ordenActual = { columna: null, direccion: 'asc' };
 
         btnBuscar.addEventListener('click', function(e) {
             e.preventDefault();
             realizarBusqueda();
         });
 
-        function realizarBusqueda() {
-            const apellido = document.getElementById('apellido').value;
-            const nombre = document.getElementById('nombre').value;
-            const tipoDocumento = document.getElementById('tipoDocumento').value;
-            const documento = document.getElementById('documento').value;
+        btnSiguiente.addEventListener('click', function() {
+            const seleccionado = document.querySelector('input[name="huespedId"]:checked');
+            if (!seleccionado) {
+                document.getElementById('modalAdvertencia').classList.add('active');
+                return;
+            }
+            document.getElementById('formBusqueda').submit();
+        });
 
-            // Construir URL con parámetros
+        window.cerrarModalAdvertencia = function() {
+            document.getElementById('modalAdvertencia').classList.remove('active');
+        };
+
+        function realizarBusqueda() {
+            const apellido = document.getElementById('apellido').value.trim();
+            const nombre = document.getElementById('nombre').value.trim();
+            const tipoDocumento = document.getElementById('tipoDocumento').value;
+            const documento = document.getElementById('documento').value.trim();
+
             const params = new URLSearchParams();
             if (apellido) params.append('apellido', apellido);
             if (nombre) params.append('nombre', nombre);
             if (tipoDocumento) params.append('tipoDocumento', tipoDocumento);
             if (documento) params.append('documento', documento);
 
-            // Realizar petición POST al endpoint REST
             fetch('/api/personas/huesped/buscar?' + params.toString(), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error en la búsqueda');
-                }
-                return response.json();
-            })
-            .then(huespedes => {
-                mostrarResultados(huespedes);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al realizar la búsqueda. Por favor, intente nuevamente.');
-            });
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la búsqueda');
+                    return response.json();
+                })
+                .then(huespedes => {
+                    if (huespedes.length === 0) {
+                        resultadosGlobales = [];
+                        document.getElementById('tablaResultados').innerHTML = '';
+                        document.getElementById('noResultados').style.display = 'block';
+
+                        setTimeout(function() {
+                            window.location.href = '/huesped/alta';
+                        }, 2000);
+
+                    } else {
+                        resultadosGlobales = huespedes;
+                        resetearIconos();
+                        mostrarResultados(resultadosGlobales);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al realizar la búsqueda.');
+                });
         }
+
+        window.ordenarResultados = function(columna) {
+            if (resultadosGlobales.length === 0) return;
+
+            if (ordenActual.columna === columna) {
+                ordenActual.direccion = (ordenActual.direccion === 'asc') ? 'desc' : 'asc';
+            } else {
+                ordenActual.columna = columna;
+                ordenActual.direccion = 'asc';
+            }
+
+            resultadosGlobales.sort((a, b) => {
+                let valA = a[columna];
+                let valB = b[columna];
+                if (valA == null) valA = "";
+                if (valB == null) valB = "";
+
+                if (columna === 'documento' && !isNaN(valA) && !isNaN(valB)) {
+                    valA = Number(valA);
+                    valB = Number(valB);
+                } else {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                }
+
+                if (valA < valB) return ordenActual.direccion === 'asc' ? -1 : 1;
+                if (valA > valB) return ordenActual.direccion === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            actualizarIconos(columna, ordenActual.direccion);
+            mostrarResultados(resultadosGlobales);
+        };
 
         function mostrarResultados(huespedes) {
             tablaResultados.innerHTML = '';
-            
-            if (huespedes.length === 0) {
+            if (!huespedes || huespedes.length === 0) {
                 noResultados.style.display = 'block';
             } else {
                 noResultados.style.display = 'none';
-                
                 huespedes.forEach(huesped => {
                     const fila = document.createElement('tr');
                     fila.innerHTML = `
-                        <td>
-                            <input type="radio" name="huespedId" value="${huesped.id}">
-                        </td>
+                        <td><input type="radio" name="huespedId" value="${huesped.id}"></td>
                         <td>${huesped.apellido}</td>
                         <td>${huesped.nombre}</td>
                         <td>${huesped.tipoDocumento}</td>
@@ -387,6 +502,25 @@
                     tablaResultados.appendChild(fila);
                 });
             }
+        }
+
+        function actualizarIconos(columna, direccion) {
+            resetearIconos();
+
+            const iconId = 'icon-' + columna;
+            const span = document.getElementById(iconId);
+            if (span) {
+                span.textContent = (direccion === 'asc') ? '▲' : '▼';
+                span.style.color = '#333';
+            }
+        }
+
+        function resetearIconos() {
+            const iconos = document.querySelectorAll('.sort-icon');
+            iconos.forEach(icon => {
+                icon.textContent = '↕';
+                icon.style.color = '#ccc';
+            });
         }
     });
 </script>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" 
+<html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -11,13 +11,13 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        
+
         .navbar {
             background: rgba(255, 255, 255, 0.95);
             padding: 15px 30px;
@@ -26,23 +26,23 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .navbar-brand {
             font-size: 24px;
             font-weight: bold;
             color: #667eea;
         }
-        
+
         .navbar-user {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-        
+
         .user-info {
             color: #333;
         }
-        
+
         .btn-logout {
             padding: 8px 20px;
             background: #764ba2;
@@ -53,17 +53,17 @@
             text-decoration: none;
             font-size: 14px;
         }
-        
+
         .btn-logout:hover {
             background: #c82333;
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 50px auto;
             padding: 0 20px;
         }
-        
+
         .welcome-section {
             background: white;
             padding: 40px;
@@ -72,23 +72,23 @@
             text-align: center;
             margin-bottom: 40px;
         }
-        
+
         .welcome-section h1 {
             color: #333;
             margin-bottom: 10px;
         }
-        
+
         .welcome-section p {
             color: #666;
             font-size: 18px;
         }
-        
+
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
         }
-        
+
         .menu-card {
             background: white;
             padding: 30px;
@@ -101,32 +101,32 @@
             width: 100%;
             font-family: inherit;
         }
-        
+
         .menu-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
-        
+
         .menu-card:active {
             transform: translateY(-3px);
         }
-        
+
         .menu-card-icon {
             font-size: 48px;
             margin-bottom: 15px;
         }
-        
+
         .menu-card-icon img {
             height: 80px;
             width: auto;
         }
-        
+
         .menu-card h3 {
             color: #333;
             margin-bottom: 10px;
             font-size: 20px;
         }
-        
+
         .menu-card p {
             color: #666;
             font-size: 14px;
@@ -134,63 +134,72 @@
     </style>
 </head>
 <body>
-    <!-- Barra de navegación -->
-    <nav class="navbar">
-        <div class="navbar-brand">
-            <img th:src="@{/images/logo-hotel-premier.png}" alt="Hotel Premier" style="height: 40px; vertical-align: middle; margin-right: 10px;">
-            Hotel Premier
-        </div>
-        <div class="navbar-user">
+<!-- Barra de navegación -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <img th:src="@{/images/logo-hotel-premier.png}" alt="Hotel Premier" style="height: 40px; vertical-align: middle; margin-right: 10px;">
+        Hotel Premier
+    </div>
+    <div class="navbar-user">
             <span class="user-info">
                 Bienvenido, <strong sec:authentication="name">Usuario</strong>
             </span>
-            <form th:action="@{/logout}" method="post" style="display: inline;">
-                <button type="submit" class="btn-logout">Cerrar Sesión</button>
-            </form>
-        </div>
-    </nav>
-    
-    <!-- Contenido principal -->
-    <div class="container">
-        <div class="welcome-section">
-            <h1>¡BIENVENIDO!</h1>
-            <p>Menú Principal Conserje</p>
-        </div>
-        
-        <!-- Grid de opciones del menú -->
-        <div class="menu-grid">
-            <button class="menu-card" onclick="window.location.href='/huesped/alta'">
-                <div class="menu-card-icon">
-                    <img th:src="@{/images/alta-huesped.png}" alt="Alta Huésped">
-                </div>
-                <h3>Alta Huésped</h3>
-                <p>Registrar un nuevo huésped en el sistema</p>
-            </button>
-            
-            <button class="menu-card" onclick="return false;">
-                <div class="menu-card-icon">
-                    <img th:src="@{/images/buscar-huesped.png}" alt="Buscar Huésped">
-                </div>
-                <h3>Buscar Huésped</h3>
-                <p>Buscar información de huéspedes</p>
-            </button>
-            
-            <button class="menu-card" onclick="return false;">
-                <div class="menu-card-icon">
-                    <img th:src="@{/images/reservar-habitacion.png}" alt="Reservar Habitación">
-                </div>
-                <h3>Reservar Habitación</h3>
-                <p>Crear nueva reserva de habitación</p>
-            </button>
-            
-            <button class="menu-card" onclick="return false;">
-                <div class="menu-card-icon">
-                    <img th:src="@{/images/ocupar-habitacion.png}" alt="Ocupar Habitación">
-                </div>
-                <h3>Ocupar Habitación</h3>
-                <p>Check-in de huésped a habitación</p>
-            </button>
-        </div>
+        <form th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit" class="btn-logout">Cerrar Sesión</button>
+        </form>
     </div>
+</nav>
+
+<!-- Contenido principal -->
+<div class="container">
+    <div class="welcome-section">
+        <h1>¡BIENVENIDO!</h1>
+        <p>Menú Principal Conserje</p>
+    </div>
+
+    <!-- Grid de opciones del menú -->
+    <div class="menu-grid">
+        <button class="menu-card" onclick="window.location.href='/huesped/alta'">
+            <div class="menu-card-icon">
+                <img th:src="@{/images/alta-huesped.png}" alt="Alta Huésped">
+            </div>
+            <h3>Alta Huésped</h3>
+            <p>Registrar un nuevo huésped en el sistema</p>
+        </button>
+
+        <button class="menu-card" onclick="window.location.href='/huesped/buscar'">
+            <div class="menu-card-icon">
+                <img th:src="@{/images/buscar-huesped.png}" alt="Buscar Huésped">
+            </div>
+            <h3>Buscar Huésped</h3>
+            <p>Buscar información de huéspedes</p>
+        </button>
+
+        <button class="menu-card" onclick="window.location.href='/habitacion/estado?contexto=reservar'">
+            <div class="menu-card-icon">
+                <img th:src="@{/images/reservar-habitacion.png}" alt="Reservar Habitación">
+            </div>
+            <h3>Reservar Habitación</h3>
+            <p>Crear nueva reserva de habitación</p>
+        </button>
+
+        <button class="menu-card" onclick="window.location.href='/habitacion/estado?contexto=ocupar'">
+            <div class="menu-card-icon">
+                <img th:src="@{/images/ocupar-habitacion.png}" alt="Ocupar Habitación">
+            </div>
+            <h3>Ocupar Habitación</h3>
+            <p>Check-in de huésped a habitación</p>
+        </button>
+
+        <button class="menu-card" onclick="window.location.href='/habitacion/estado?contexto=ver'">
+            <div class="menu-card-icon">
+                <img th:src="@{/images/reservar-habitacion.png}" alt="Estado">
+            </div>
+            <h3>Estado Habitaciones</h3>
+            <p>Consultar disponibilidad y grilla completa</p>
+        </button>
+
+    </div>
+</div>
 </body>
 </html>
