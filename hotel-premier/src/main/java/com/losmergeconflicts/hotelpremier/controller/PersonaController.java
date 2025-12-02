@@ -9,14 +9,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.losmergeconflicts.hotelpremier.dto.HuespedDTORequest;
 import com.losmergeconflicts.hotelpremier.dto.HuespedDTOResponse;
 import com.losmergeconflicts.hotelpremier.dto.LocalidadDTO;
 import com.losmergeconflicts.hotelpremier.dto.NacionalidadDTO;
-import com.losmergeconflicts.hotelpremier.entity.TipoDocumento;
 import com.losmergeconflicts.hotelpremier.service.GestorPersonas;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -120,47 +118,6 @@ public class PersonaController {
         log.info("GET /api/personas/nacionalidades - Solicitando lista de nacionalidades");
         List<NacionalidadDTO> nacionalidades = gestorPersonas.listarNacionalidades();
         return new ResponseEntity<>(nacionalidades, HttpStatus.OK);
-    }
-
-    /**
-     * Busca huéspedes en el sistema según los criterios proporcionados.
-     * Este endpoint corresponde a CU02: Buscar Huésped.
-     *
-     * @param apellido      Criterio de búsqueda (opcional)
-     * @param nombre        Criterio de búsqueda (opcional)
-     * @param tipoDocumento Criterio de búsqueda (opcional)
-     * @param documento     Criterio de búsqueda (opcional)
-     * @return ResponseEntity con la lista de huéspedes que coinciden con los criterios
-     */
-    @Operation(summary = "Buscar huéspedes",
-                description = "Busca huéspedes en el sistema según apellido, nombre, tipo de documento y/o número de documento.",
-                responses = {
-                    @ApiResponse(responseCode = "200", description = "Búsqueda realizada correctamente"),
-                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-                })
-    @PostMapping("/huesped/buscar")
-    public ResponseEntity<List<HuespedDTOResponse>> buscarHuespedes(
-            @RequestParam(value = "apellido", required = false) String apellido,
-            @RequestParam(value = "nombre", required = false) String nombre,
-            @RequestParam(value = "tipoDocumento", required = false) TipoDocumento tipoDocumento,
-            @RequestParam(value = "documento", required = false) String documento) {
-
-        // Sanitizar entradas
-        if (apellido != null) {
-            apellido = apellido.toUpperCase().replaceAll("[^A-ZÑ ]", "");
-        }
-        if (nombre != null) {
-            nombre = nombre.toUpperCase().replaceAll("[^A-ZÑ ]", "");
-        }
-        if (documento != null) {
-            documento = documento.replaceAll("[^0-9]", "");
-        }
-
-        log.info("POST /api/personas/huesped/buscar - Apellido[{}], Nombre[{}], Tipo[{}], Doc[{}]", 
-                apellido, nombre, tipoDocumento, documento);
-        
-        List<HuespedDTOResponse> huespedes = gestorPersonas.buscarHuespedes(apellido, nombre, tipoDocumento, documento);
-        return new ResponseEntity<>(huespedes, HttpStatus.OK);
     }
 
 }
