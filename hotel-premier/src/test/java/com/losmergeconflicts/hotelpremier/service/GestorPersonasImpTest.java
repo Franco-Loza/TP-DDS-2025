@@ -999,11 +999,7 @@ public class GestorPersonasImpTest {
         String nombre = "Juan";
         TipoDocumento tipoDoc = TipoDocumento.DNI;
         String nroDoc = "12345678";
-
-        // Datos esperados en el DAO.
-        String apellidoSanitizado = "PÉREZ";
-        String nombreSanitizado = "JUAN";
-
+        
         // Crear huéspedes de prueba
         Huesped huesped1 = new Huesped();
         huesped1.setId(1L);
@@ -1041,7 +1037,7 @@ public class GestorPersonasImpTest {
         );
         
         // Simular respuesta del DAO
-        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, tipoDoc, nroDoc))
+        when(huespedDAO.buscarHuespedesPorCriterios(apellido, nombre, tipoDoc, nroDoc))
                 .thenReturn(huespedesEncontrados);
         
         // Simular mapper
@@ -1067,7 +1063,7 @@ public class GestorPersonasImpTest {
         assertEquals("Pérez", resultado.get(1).apellido());
         
         // Verificar interacciones con los mocks
-        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, tipoDoc, nroDoc);
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellido, nombre, tipoDoc, nroDoc);
         verify(huespedMapper, times(1)).toResponse(huesped1);
         verify(huespedMapper, times(1)).toResponse(huesped2);
     }
@@ -1088,9 +1084,7 @@ public class GestorPersonasImpTest {
         // --- ARRANGE ---
         
         String apellido = "García";
-
-        String apellidoSanitizado = "GARCÍA";
-
+        
         Huesped huesped = new Huesped();
         huesped.setId(3L);
         huesped.setNombre("María");
@@ -1108,7 +1102,7 @@ public class GestorPersonasImpTest {
                 1L, "Argentina"
         );
         
-        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, null, null, null))
+        when(huespedDAO.buscarHuespedesPorCriterios(apellido, null, null, null))
                 .thenReturn(huespedesEncontrados);
         when(huespedMapper.toResponse(huesped)).thenReturn(response);
         
@@ -1123,7 +1117,7 @@ public class GestorPersonasImpTest {
         assertEquals("María", resultado.get(0).nombre());
         assertEquals("García", resultado.get(0).apellido());
         
-        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, null, null, null);
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellido, null, null, null);
         verify(huespedMapper, times(1)).toResponse(huesped);
     }
 
@@ -1143,9 +1137,7 @@ public class GestorPersonasImpTest {
         // --- ARRANGE ---
         
         String nombre = "Carlos";
-
-        String nombreSanitizado = "CARLOS";
-
+        
         Huesped huesped1 = new Huesped();
         huesped1.setId(4L);
         huesped1.setNombre("Carlos");
@@ -1174,7 +1166,7 @@ public class GestorPersonasImpTest {
                 1L, "Argentina"
         );
         
-        when(huespedDAO.buscarHuespedesPorCriterios(null, nombreSanitizado, null, null))
+        when(huespedDAO.buscarHuespedesPorCriterios(null, nombre, null, null))
                 .thenReturn(huespedesEncontrados);
         when(huespedMapper.toResponse(huesped1)).thenReturn(response1);
         when(huespedMapper.toResponse(huesped2)).thenReturn(response2);
@@ -1190,7 +1182,7 @@ public class GestorPersonasImpTest {
         assertEquals("Carlos", resultado.get(0).nombre());
         assertEquals("Carlos Alberto", resultado.get(1).nombre());
         
-        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, nombreSanitizado, null, null);
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, nombre, null, null);
         verify(huespedMapper, times(2)).toResponse(any(Huesped.class));
     }
 
@@ -1211,9 +1203,7 @@ public class GestorPersonasImpTest {
         
         TipoDocumento tipoDoc = TipoDocumento.PASAPORTE;
         String nroDoc = "ABC123456";
-
-        String nroDocSanitizado = "123456";
-
+        
         Huesped huesped = new Huesped();
         huesped.setId(6L);
         huesped.setNombre("John");
@@ -1231,7 +1221,7 @@ public class GestorPersonasImpTest {
                 2L, "Estados Unidos"
         );
         
-        when(huespedDAO.buscarHuespedesPorCriterios(null, null, tipoDoc, nroDocSanitizado))
+        when(huespedDAO.buscarHuespedesPorCriterios(null, null, tipoDoc, nroDoc))
                 .thenReturn(huespedesEncontrados);
         when(huespedMapper.toResponse(huesped)).thenReturn(response);
         
@@ -1248,7 +1238,7 @@ public class GestorPersonasImpTest {
         assertEquals(TipoDocumento.PASAPORTE, resultado.get(0).tipoDocumento());
         assertEquals("ABC123456", resultado.get(0).documento());
         
-        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, null, tipoDoc, nroDocSanitizado);
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, null, tipoDoc, nroDoc);
         verify(huespedMapper, times(1)).toResponse(huesped);
     }
 
@@ -1302,13 +1292,10 @@ public class GestorPersonasImpTest {
         
         String apellido = "NoExiste";
         String nombre = "Nadie";
-
-        String apellidoSanitizado = "NOEXISTE";
-        String nombreSanitizado = "NADIE";
-
+        
         List<Huesped> huespedesEncontrados = Arrays.asList();
         
-        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, null, null))
+        when(huespedDAO.buscarHuespedesPorCriterios(apellido, nombre, null, null))
                 .thenReturn(huespedesEncontrados);
         
         // --- ACT ---
@@ -1320,7 +1307,7 @@ public class GestorPersonasImpTest {
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
         
-        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, nombreSanitizado, null, null);
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellido, nombre, null, null);
         verify(huespedMapper, never()).toResponse(any(Huesped.class));
     }
 
@@ -1341,9 +1328,7 @@ public class GestorPersonasImpTest {
         
         String apellido = "Rodríguez";
         TipoDocumento tipoDoc = TipoDocumento.DNI;
-
-        String apellidoSanitizado = "RODRÍGUEZ";
-
+        
         Huesped huesped1 = new Huesped();
         huesped1.setId(7L);
         huesped1.setNombre("Ana");
@@ -1376,7 +1361,7 @@ public class GestorPersonasImpTest {
                 1L, "Argentina"
         );
         
-        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, null, tipoDoc, null))
+        when(huespedDAO.buscarHuespedesPorCriterios(apellido, null, tipoDoc, null))
                 .thenReturn(huespedesEncontrados);
         when(huespedMapper.toResponse(huesped1)).thenReturn(response1);
         when(huespedMapper.toResponse(huesped2)).thenReturn(response2);
@@ -1394,7 +1379,7 @@ public class GestorPersonasImpTest {
         assertEquals(TipoDocumento.DNI, resultado.get(0).tipoDocumento());
         assertEquals(TipoDocumento.DNI, resultado.get(1).tipoDocumento());
         
-        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellidoSanitizado, null, tipoDoc, null);
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(apellido, null, tipoDoc, null);
         verify(huespedMapper, times(2)).toResponse(any(Huesped.class));
     }
 
@@ -1415,8 +1400,6 @@ public class GestorPersonasImpTest {
         
         String nombre = "Pedro";
         String nroDoc = "55555555";
-
-        String nombreSanitizado = "PEDRO";
         
         Huesped huesped = new Huesped();
         huesped.setId(9L);
@@ -1435,7 +1418,7 @@ public class GestorPersonasImpTest {
                 1L, "Argentina"
         );
         
-        when(huespedDAO.buscarHuespedesPorCriterios(null, nombreSanitizado, null, nroDoc))
+        when(huespedDAO.buscarHuespedesPorCriterios(null, nombre, null, nroDoc))
                 .thenReturn(huespedesEncontrados);
         when(huespedMapper.toResponse(huesped)).thenReturn(response);
         
@@ -1450,7 +1433,7 @@ public class GestorPersonasImpTest {
         assertEquals("Pedro", resultado.get(0).nombre());
         assertEquals("55555555", resultado.get(0).documento());
         
-        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, nombreSanitizado, null, nroDoc);
+        verify(huespedDAO, times(1)).buscarHuespedesPorCriterios(null, nombre, null, nroDoc);
         verify(huespedMapper, times(1)).toResponse(huesped);
     }
 
@@ -1469,8 +1452,6 @@ public class GestorPersonasImpTest {
         // --- ARRANGE ---
         
         String apellido = "Test";
-
-        String apellidoSanitizado = "TEST";
         
         Huesped huesped1 = new Huesped();
         huesped1.setId(10L);
@@ -1510,7 +1491,7 @@ public class GestorPersonasImpTest {
                 1L, "Argentina"
         );
         
-        when(huespedDAO.buscarHuespedesPorCriterios(apellidoSanitizado, null, null, null))
+        when(huespedDAO.buscarHuespedesPorCriterios(apellido, null, null, null))
                 .thenReturn(huespedesEncontrados);
         when(huespedMapper.toResponse(huesped1)).thenReturn(response1);
         when(huespedMapper.toResponse(huesped2)).thenReturn(response2);

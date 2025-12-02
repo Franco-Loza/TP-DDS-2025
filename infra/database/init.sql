@@ -269,7 +269,6 @@ CREATE TABLE IF NOT EXISTS estadias (
     id BIGSERIAL PRIMARY KEY,
     fecha_hora_ingreso TIMESTAMP NOT NULL,
     fecha_hora_egreso TIMESTAMP,
-    fecha_egreso_esperado DATE,
     huesped_id BIGINT NOT NULL,
     habitacion_id BIGINT NOT NULL,
     reserva_id BIGINT,
