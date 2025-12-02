@@ -17,6 +17,11 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.H2Dialect
   
+  # Deshabilitar ejecución de data.sql en tests
+  sql:
+    init:
+      mode: never
+  
   h2:
     console:
       enabled: false  # No necesitamos la consola H2 en tests

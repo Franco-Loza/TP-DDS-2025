@@ -145,11 +145,22 @@ public class PersonaController {
             @RequestParam(value = "tipoDocumento", required = false) TipoDocumento tipoDocumento,
             @RequestParam(value = "documento", required = false) String documento) {
 
-        log.info("POST /api/personas/huesped/buscar - Params recibidos");
+        // Sanitizar entradas
+        if (apellido != null) {
+            apellido = apellido.toUpperCase().replaceAll("[^A-ZÑ ]", "");
+        }
+        if (nombre != null) {
+            nombre = nombre.toUpperCase().replaceAll("[^A-ZÑ ]", "");
+        }
+        if (documento != null) {
+            documento = documento.replaceAll("[^0-9]", "");
+        }
 
+        log.info("POST /api/personas/huesped/buscar - Apellido[{}], Nombre[{}], Tipo[{}], Doc[{}]", 
+                apellido, nombre, tipoDocumento, documento);
+        
         List<HuespedDTOResponse> huespedes = gestorPersonas.buscarHuespedes(apellido, nombre, tipoDocumento, documento);
-
-        return ResponseEntity.ok(huespedes);
+        return new ResponseEntity<>(huespedes, HttpStatus.OK);
     }
 
 }

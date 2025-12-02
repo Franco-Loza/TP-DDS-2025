@@ -150,15 +150,21 @@
         }
 
         .icon {
-            font-size: 48px;
             text-align: center;
             margin-bottom: 20px;
+        }
+        
+        .icon img {
+            height: 80px;
+            width: auto;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <div class="icon">🏨</div>
+        <div class="icon">
+            <img th:src="@{/images/logo-hotel-premier.png}" alt="Hotel Premier">
+        </div>
         <h1>Bienvenido</h1>
         <p class="subtitle">Inicia sesión en Hotel Premier</p>
 
@@ -181,6 +187,7 @@
                     id="username" 
                     name="username" 
                     placeholder="Ingresa tu nombre de usuario"
+                    maxlength="50"
                     required 
                     autofocus>
             </div>
@@ -192,6 +199,7 @@
                     id="password" 
                     name="password" 
                     placeholder="Ingresa tu contraseña"
+                    maxlength="50"
                     required>
             </div>
 

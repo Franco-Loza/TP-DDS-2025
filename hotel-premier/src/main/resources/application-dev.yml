@@ -20,6 +20,15 @@ spring:
         use_sql_comments: true
     hibernate:
       ddl-auto: validate
+    defer-datasource-initialization: true
+
+  # Ejecutar data.sql después de que Hibernate cree/valide el esquema
+  # defer-datasource-initialization: true asegura que se ejecute después de JPA
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+      continue-on-error: false
 
   # Configuración de Spring Security (solo para desarrollo)
   security:

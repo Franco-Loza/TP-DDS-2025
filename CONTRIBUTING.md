@@ -38,9 +38,14 @@ Para asegurarte de que todo funciona, vamos a levantar la aplicación con Docker
 1.  **Abre Docker Desktop** y asegúrate de que esté corriendo. Verás el ícono de la ballena en tu barra de tareas.
 2.  Abrir tu editor de código (Visual Studio Code o Cursor) y abre el proyecto.
 3.  En la raíz del proyecto hay un archivo ".env.example", este  archivo contiene varibles de entorno para que la app usa para conectar la base de datos, pero este archivo solo debe estar en tu PC de forma local. Para que esto funcione, debes editar el nombre del archivo, y el mismo solo debe tener el siguiente nombre:  ".env". Ahora ya tenes configuaradas las variables de entorno, continúa siguiendo los pasos.
-4.  Abrir una nueva terminal en tu editor de código, ejecuta el siguiente comando:
+4.  Abrir una nueva terminal en tu editor de código, ejecuta los siguientes comandos:
+
     ```bash
-    docker-compose --profile dev up -d --build
+    cd hotel-premier
+    ./mvnw clean package -DskipTests
+    cd ..
+    docker-compose build
+    docker-compose up -d
     ```
     * **¿Qué hace este comando?** La primera vez, descargará las imágenes necesarias (Java, PostgreSQL), construirá la aplicación y creará los contenedores. La primera vez demorará algunos minutos.
 5. Podes probar la app ingresando las siguientes direcciones en el navegador:
@@ -50,7 +55,7 @@ Para asegurarte de que todo funciona, vamos a levantar la aplicación con Docker
    ```
 6.  Cuando quieras detener la aplicación, ejecuta en la consola:
     ```bash
-    docker-compose --profile dev down
+    docker-compose down
     ```
     * **¿Qué hace este comando?** Detiene los contenedores (no los elimina).
 
@@ -91,13 +96,20 @@ Por cada tarea nueva, crea una rama nueva. Esto aísla tu trabajo y evita confli
 
 Antes de tocar algo, levantar el proyecto para confirmar que la base sobre la que vas a trabajar es estable.
 ```bash
-docker-compose --profile dev up -d
+cd hotel-premier
+./mvnw clean package -DskipTests
+cd ..
+docker-compose build hotel-premier
+docker-compose up -d --force-recreate --no-deps hotel-premier
 ````
+Estos comando compila la versión actual del proyecto Spring Boot, crea una imagen de contenedor y lo levanta.
+
+**IMPORTANTE: Usar estos comando cada vez que introduzcas cambios y lo quieras probar**
 
 Si todo levanta correctamente, puedes detenerlo con:
 
 ```bash
-docker-compose --profile dev down
+docker-compose down
 ```
 
 y empezar a programar.

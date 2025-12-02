@@ -18,6 +18,16 @@ import org.springframework.security.web.SecurityFilterChain;
  * - El comportamiento del logout
  * - El algoritmo de encriptación de contraseñas
  * 
+ * ⚠️ IMPORTANTE - CONFIGURACIÓN DE DESARROLLO:
+ * Actualmente todos los endpoints /api/** están públicos para facilitar
+ * el desarrollo y testing con Swagger UI.
+ * 
+ * 🔒 PARA PRODUCCIÓN:
+ * - Restringir endpoints /api/** según roles y permisos
+ * - Implementar JWT o sesiones seguras para APIs
+ * - Habilitar CORS solo para dominios confiables
+ * - Implementar rate limiting y protección contra ataques
+ * 
  * @Configuration: Indica que esta clase contiene definiciones de beans
  * @EnableWebSecurity: Activa la configuración de seguridad web de Spring
  * @RequiredArgsConstructor: Genera constructor con campos final (inyección de dependencias)
@@ -57,6 +67,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // Deshabilitar CSRF para endpoints de API REST
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/**")
+            )
+            
             // Configuración de autorización de requests
             .authorizeHttpRequests(authorize -> authorize
                 // Recursos estáticos públicos (CSS, JS, imágenes)
@@ -65,8 +80,14 @@ public class SecurityConfig {
                 // Endpoints de autenticación públicos
                 .requestMatchers("/login", "/registro").permitAll()
                 
+                // API REST endpoints públicos (para desarrollo y testing con Swagger)
+                .requestMatchers("/api/**").permitAll()
+                
                 // Swagger UI y documentación API pública
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                
+                // Actuator endpoints (health check, etc.)
+                .requestMatchers("/actuator/**").permitAll()
                 
                 // Todas las demás rutas requieren autenticación
                 .anyRequest().authenticated()

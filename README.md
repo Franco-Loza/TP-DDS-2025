@@ -5,6 +5,20 @@ Este repositorio contiene el código fuente y la documentación del Trabajo Prá
 Este proyecto es el desarrollo de un **sistema de información** para la **gestión de un hotel**.
 
 ---
+
+## 👨‍💻 Equipo de Desarrollo ("Los Merge Conflicts")
+
+  * **Loza, Franco**
+  * **Nicle, Santiago** 
+  * **Ramseyer, Egon Eugenio** 
+  * **Scarpin, Luciano Mateo** 
+
+### **Docente Auxiliar Asignado**
+
+  * **Ramonda, Javier** 
+
+---
+
 ## ✨ Alcances y Funcionalidades Principales
 
 El sistema está diseñado para cubrir las siguientes funcionalidades clave
@@ -15,6 +29,14 @@ El sistema está diseñado para cubrir las siguientes funcionalidades clave
 * **Estado de Habitaciones**: Ofrece una visualización clara del estado de las habitaciones (ocupadas, reservadas, libres, fuera de servicio) por rango de fechas.
 * **Facturación y Pagos**: Gestiona la facturación de estadías y consumos y el registro de los pagos correspondientes.
 * **Reportes**: Genera listados de cheques en cartera e ingresos por fechas y medios de pago.
+
+### En el contexto del trabajo práctico el alcance será el siguiente
+
+* Autenticación de conserje
+* Alta de huésped
+* Buscar huéspedes
+* Reservar habitación
+* Ocupar habitación
 
 ---
 ## 🛠️ Tecnologías Utilizadas
@@ -50,19 +72,24 @@ El proyecto está configurado para funcionar con Docker.
 
 En la raíz del proyecto hay un archivo **.env.example**, este  archivo contiene varibles de entorno. Editar el nombre del archivo a: **.env**
 
-Ejecuta el siguiente comando desde la raíz del repositorio (`TP-DSI-2025/`):
+Ejecuta los siguientes comandos desde la raíz del repositorio (`TP-DSI-2025/`):
 
 ```bash
-docker-compose --profile dev up -d --build
+cd hotel-premier
+./mvnw clean package -DskipTests
+cd ..
+docker-compose build
+docker-compose up -d
 ```
 
 Este comando hará lo siguiente:
 
-1.  Construirá la imagen de la aplicación Spring Boot.
-2.  Levantará un contenedor para la base de datos PostgreSQL.
-3.  Levantará un contenedor con pgadmin 4.
-4.  Levantará un contenedor para la aplicación, activando el perfil de desarrollo (`dev`).
-5.  Aplicará el script `init.sql` para inicializar la base de datos.
+1.  Compila el proyecto Spring Boot.
+2.  Construirá la imagen de la aplicación Spring Boot.
+3.  Levantará un contenedor para la base de datos PostgreSQL.
+4.  Levantará un contenedor con pgadmin 4.
+5.  Levantará un contenedor para la aplicación.
+6.  Aplicará el script `init.sql` para inicializar la base de datos y el script `data.sql`  para cargar datos iniciales.
 
 ### **4. Acceder a la Aplicación**
 
@@ -72,14 +99,4 @@ Una vez que los contenedores estén en funcionamiento, podrás acceder a la apli
 
 -----
 
-## 👨‍💻 Equipo de Desarrollo ("Los Merge Conflicts")
-
-  * **Loza, Franco**
-  * **Nicle, Santiago** 
-  * **Ramseyer, Egon Eugenio** 
-  * **Scarpin, Luciano Mateo** 
-
-### **Docente Auxiliar Asignado**
-
-  * **Ramonda, Javier** 
 

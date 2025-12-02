@@ -1,10 +1,7 @@
-version: '3.8'
-
 services:
   postgres-db:
     image: postgres:16-alpine
     container_name: hotel-premier-postgres
-    profiles: ["dev"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-hotel_premier_db}
       POSTGRES_USER: ${POSTGRES_USER:-hotel_user}
@@ -25,7 +22,6 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: hotel-premier-pgadmin
-    profiles: ["dev"]
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@hotelpremier.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
@@ -44,7 +40,6 @@ services:
       context: ./hotel-premier
       dockerfile: Dockerfile
     container_name: hotel-premier-app
-    profiles: ["dev"]
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-dev}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${POSTGRES_DB:-hotel_premier_db}
@@ -57,6 +52,7 @@ services:
     depends_on:
       postgres-db:
         condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
