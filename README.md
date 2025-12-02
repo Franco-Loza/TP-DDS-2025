@@ -8,14 +8,19 @@ Este proyecto es el desarrollo de un **sistema de información** para la **gesti
 
 ## 👨‍💻 Equipo de Desarrollo ("Los Merge Conflicts")
 
+  * **Bortoli, Antonio**
   * **Loza, Franco**
-  * **Nicle, Santiago** 
-  * **Ramseyer, Egon Eugenio** 
+  * **Melgratti, Nicolas**
+  * **Solterman, Nicolas**
   * **Scarpin, Luciano Mateo** 
 
 ### **Docente Auxiliar Asignado**
 
-  * **Ramonda, Javier** 
+  * **Barragan, Pablo**
+  * **Oggier, Karen**
+  * **Chort, Julio**
+  * **Peiretti, Tomas**
+
 
 ---
 
@@ -43,7 +48,7 @@ El sistema está diseñado para cubrir las siguientes funcionalidades clave
 
 * **Backend**: Java 21, Spring Boot, Spring Security, Spring Data JPA.
 * **Base de Datos**: PostgreSQL.
-* **Frontend**: Thymeleaf para renderizado del lado del servidor, HTML, CSS y JavaScript.
+* **Frontend**: Next.Js
 * **Gestión del Proyecto**: Maven.
 * **Contenerización**: Docker y Docker Compose.
 * **CI/CD**: GitHub Actions para ejecución automática de tests.
@@ -63,7 +68,7 @@ Sigue estos pasos para levantar el proyecto en tu máquina local.
 
 ```bash
 git clone <URL-del-repositorio>
-cd TP-DSI-2025
+cd TP-DDS-2025
 ````
 
 ### **3. Levantar el Entorno**
