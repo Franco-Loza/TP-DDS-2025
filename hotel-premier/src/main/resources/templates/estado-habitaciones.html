@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      lang="es">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Estado de Habitaciones - Hotel Premier</title>
@@ -12,89 +10,9 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+            padding-bottom: 40px;
         }
 
-        /* --- ESTILOS COMUNES (Btn, Modales) --- */
-        .btn {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-        }
-
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #d0d0d0;
-        }
-
-        /* MODAL ESTILO CONFIRMAR RESERVA */
-        .confirmation-dialog {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        .confirmation-dialog.active {
-            display: flex;
-        }
-
-        .confirmation-content {
-            background: white;
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
-
-        .confirmation-content h3 {
-            margin: 0 0 15px 0;
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .confirmation-content p {
-            margin: 0 0 25px 0;
-            font-size: 14px;
-            color: #555;
-            line-height: 1.5;
-        }
-
-        .confirmation-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-
-        /* --- ESTILOS GRILLA --- */
         .table-container {
             max-height: 450px;
             overflow: auto;
@@ -122,35 +40,26 @@
             background-color: #e5e7eb;
         }
 
-        /* COLORES */
-        .estado-OCUPADA { background-color: #dc2626; }
-        .estado-RESERVADA { background-color: #facc15; }
-        .estado-LIBRE { background-color: #07672a; }
-
-        /* Selección Visual */
-        td.seleccionada {
-            box-shadow: inset 0 0 0 4px #3b82f6 !important;
-            opacity: 1 !important;
-        }
+        /* COLORES DE ESTADOS */
+        .estado-OCUPADA { background-color: #dc2626; } /* Rojo */
+        .estado-RESERVADA { background-color: #facc15; } /* Amarillo */
+        .estado-LIBRE { background-color: #07672a; } /* Verde */
 
         td { height: 40px; min-width: 60px; }
     </style>
 </head>
 <body>
 
-<nav class="navbar bg-white/95 px-8 py-4 shadow-md flex justify-between items-center mb-8">
+<nav class="bg-white/95 px-8 py-4 shadow-md flex justify-between items-center mb-8">
     <div class="text-2xl font-bold text-[#667eea] flex items-center gap-2">
         <i class="fas fa-hotel"></i> Hotel Premier
     </div>
-    <div class="flex items-center gap-4">
-        <span class="text-gray-700">Bienvenido, <strong sec:authentication="name">Usuario</strong></span>
-        <form th:action="@{/logout}" method="post" class="inline">
-            <button type="submit" class="px-5 py-2 bg-[#764ba2] text-white rounded hover:bg-red-600 transition text-sm font-bold">Cerrar Sesión</button>
-        </form>
-    </div>
+    <a href="/menu-principal" class="px-5 py-2 bg-[#764ba2] text-white rounded hover:bg-red-600 transition text-sm font-bold shadow">
+        Volver al Menú
+    </a>
 </nav>
 
-<div class="max-w-[1200px] mx-auto bg-white rounded-lg shadow-2xl overflow-hidden p-8 relative mb-10">
+<div class="max-w-[1200px] mx-auto bg-white rounded-lg shadow-2xl overflow-hidden p-8 relative">
 
     <div class="border-b border-gray-200 pb-4 mb-6 flex justify-between items-center">
         <h2 class="text-xl font-bold text-gray-800 uppercase tracking-wide">
@@ -226,18 +135,19 @@
 
     <div class="mt-8 flex justify-end gap-3 border-t border-gray-100 pt-4">
         <button id="btnAccion"
-                class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                class="bg-[#667eea] hover:bg-[#5568d3] text-white font-bold py-2 px-8 rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm"
                 th:text="${textoBoton}" disabled>
         </button>
 
-        <a href="/menu-principal" class="btn btn-secondary uppercase flex items-center">
+        <a href="/menu-principal" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded transition uppercase text-sm flex items-center">
             Cancelar
         </a>
     </div>
 
-    <div id="modalReserva" class="confirmation-dialog">
-        <div class="confirmation-content" style="border: 2px solid #000;">
-            <div class="flex items-start gap-4 mb-6 text-left">
+    <div id="modalReserva" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white border-2 border-black p-8 w-[500px] shadow-2xl relative">
+
+            <div class="flex items-start gap-4 mb-6">
                 <div class="bg-blue-600 text-white p-3 rounded shadow">
                     <i class="fas fa-info-circle fa-lg"></i>
                 </div>
@@ -247,26 +157,22 @@
                     </h3>
                 </div>
             </div>
-            <div class="ml-16 mb-8 text-sm text-gray-800 font-mono space-y-2 text-left">
+
+            <div class="ml-16 mb-8 text-sm text-gray-800 font-mono space-y-2">
                 <p>Apellido: <span id="modalApellido" class="font-bold text-black"></span></p>
                 <p>Nombres: <span id="modalNombre" class="font-bold text-black"></span></p>
                 <p>Teléfono: <span id="modalTelefono" class="font-bold text-black"></span></p>
             </div>
-            <div class="confirmation-buttons justify-end">
-                <button id="btnOcuparIgual" class="btn border-2 border-black hover:bg-gray-100 text-black">OCUPAR IGUAL</button>
-                <button onclick="cerrarModal('modalReserva')" class="btn border-2 border-black hover:bg-gray-100 text-black">VOLVER</button>
-            </div>
-        </div>
-    </div>
 
-    <div id="availabilityModal" class="confirmation-dialog">
-        <div class="confirmation-content">
-            <h3 class="text-lg font-bold text-black mb-4">Atención</h3>
-            <p class="text-gray-700 mb-6">
-                Las habitaciones seleccionadas no están “Disponibles” para el periodo indicado.
-            </p>
-            <div class="confirmation-buttons">
-                <button onclick="cerrarModal('availabilityModal')" class="btn btn-secondary">VOLVER</button>
+            <div class="flex justify-end gap-4 mt-8">
+                <button id="btnOcuparIgual"
+                        class="border-2 border-black px-6 py-2 text-sm font-bold uppercase hover:bg-gray-100 transition text-black">
+                    OCUPAR IGUAL
+                </button>
+                <button onclick="cerrarModal()"
+                        class="border-2 border-black px-6 py-2 text-sm font-bold uppercase hover:bg-gray-100 transition text-black">
+                    VOLVER
+                </button>
             </div>
         </div>
     </div>
@@ -280,78 +186,106 @@
     const btnAccion = document.getElementById('btnAccion');
     const errorMsg = document.getElementById('errorMsg');
     const errorText = document.getElementById('errorText');
+    const modal = document.getElementById('modalReserva');
 
-    let gridDataGlobal = null;
+    let seleccionPendiente = null;
 
-    // --- 1. Cargar Grilla ---
+    // --- 1. Lógica de Carga de Grilla ---
     async function cargarGrilla() {
         const desde = inputDesde.value;
         const hasta = inputHasta.value;
         const tipo = inputTipo.value;
 
-        if (!desde) return mostrarError("Debe ingresar la fecha 'Desde'.", inputDesde);
-        if (!hasta) return mostrarError("Debe ingresar la fecha 'Hasta'.", inputHasta);
-        if (desde > hasta) return mostrarError("La fecha 'Hasta' no puede ser anterior a 'Desde'.", inputHasta);
+        if (!desde) {
+            mostrarError("Debe ingresar la fecha 'Desde'.", inputDesde);
+            return;
+        }
+        if (!hasta) {
+            mostrarError("Debe ingresar la fecha 'Hasta'.", inputHasta);
+            return;
+        }
+        if (desde > hasta) {
+            mostrarError("La fecha 'Hasta' no puede ser anterior a 'Desde'.", inputHasta);
+            limpiarTabla();
+            return;
+        }
         mostrarError(null);
 
         try {
+            // Construcción URL
             let url = `/api/habitaciones/estados?desde=${desde}&hasta=${hasta}`;
             if (tipo) url += `&tipo=${tipo}`;
 
             const res = await fetch(url);
+
+            // Manejo de errores del Backend (400 Bad Request)
             if (!res.ok) {
                 const msg = await res.text();
-                mostrarError(msg, inputDesde);
+                let foco = inputHasta;
+                if (msg.toLowerCase().includes("desde") || msg.toLowerCase().includes("antigua")) {
+                    foco = inputDesde;
+                }
+                mostrarError(msg, foco);
                 limpiarTabla();
                 return;
             }
 
             const data = await res.json();
-            gridDataGlobal = data;
             renderizar(data);
             btnAccion.disabled = false;
 
         } catch (e) {
             console.error(e);
-            mostrarError("Error de conexión.", null);
+            mostrarError("Error de conexión con el servidor.", null);
+            btnAccion.disabled = true;
         }
     }
 
-    // --- 2. Renderizar ---
+    // --- 2. Renderizado de Tabla ---
     function renderizar(data) {
         const header = document.getElementById('headerRow');
         const body = document.getElementById('bodyRows');
-        window.habitacionesMap = data.idsHabitaciones;
 
+        // Header
         header.innerHTML = '<th class="p-3 sticky-col border border-gray-300 shadow-sm bg-gray-100 z-40 text-gray-600">DÍAS</th>';
 
         if (data.nombresHabitaciones.length === 0) {
-            body.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-gray-500">No hay habitaciones.</td></tr>';
+            body.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-gray-500">No hay habitaciones encontradas.</td></tr>';
             return;
         }
 
         data.nombresHabitaciones.forEach(name => {
-            header.innerHTML += `<th class="p-2 border border-gray-300 min-w-[80px] bg-gray-200 text-gray-700 cursor-pointer hover:bg-gray-300 transition" onclick="seleccionarColumna('${name}')" title="Click para seleccionar toda la columna">${name}</th>`;
+            header.innerHTML += `<th class="p-2 border border-gray-300 min-w-[80px] bg-gray-200 text-gray-700">${name}</th>`;
         });
 
+        // Body
         body.innerHTML = '';
         data.filas.forEach(fila => {
             let rowHtml = `<tr class="hover:bg-gray-50 transition-colors">
-                    <td class="p-2 border border-gray-300 sticky-col bg-white font-mono text-xs font-bold text-gray-600 shadow-sm">${formatoFecha(fila.fecha)}</td>`;
+                    <td class="p-2 border border-gray-300 sticky-col bg-white font-mono text-xs font-bold text-gray-600 shadow-sm">
+                        ${formatoFecha(fila.fecha)}
+                    </td>`;
 
             data.nombresHabitaciones.forEach(hab => {
                 const estado = fila.estadosPorHabitacion[hab];
-                const habitacionId = data.idsHabitaciones[hab];
-
                 let claseColor = 'estado-LIBRE';
-                if (estado === 'OCUPADA') claseColor = 'estado-OCUPADA';
-                else if (estado === 'RESERVADA') claseColor = 'estado-RESERVADA';
+                let funcionClick = '';
+
+                if (estado === 'OCUPADA') {
+                    claseColor = 'estado-OCUPADA';
+                    // Ocupadas no hacen nada por ahora
+                } else if (estado === 'RESERVADA') {
+                    claseColor = 'estado-RESERVADA';
+                    // Click en Reservada activa lógica especial
+                    funcionClick = `onclick="gestionarClickCelda('${hab}', '${fila.fecha}', 'RESERVADA')"`;
+                } else {
+                    // Libre
+                    funcionClick = `onclick="gestionarClickCelda('${hab}', '${fila.fecha}', 'LIBRE')"`;
+                }
 
                 rowHtml += `<td class="border border-gray-300 cursor-pointer ${claseColor} opacity-90 hover:opacity-100 transition"
-                                data-habitacion="${hab}"
-                                data-habitacion-id="${habitacionId}"
-                                data-estado="${estado}"
-                                onclick="gestionarClickCelda(this, '${hab}', '${fila.fecha}', '${estado}')">
+                                ${funcionClick}
+                                title="${hab} - ${estado}">
                             </td>`;
             });
             rowHtml += '</tr>';
@@ -359,116 +293,101 @@
         });
     }
 
-    // --- 3. Click en Celda / Columna ---
-    function gestionarClickCelda(celda, nombreHab, fecha, estado) {
-        const contexto = "[[${contexto}]]";
+    // --- 3. Gestión de Clics en Celdas ---
+    async function gestionarClickCelda(nombreHab, fecha, estado) {
+        const contexto = "[[${contexto}]]"; // Thymeleaf injecta 'reservar' u 'ocupar'
 
         if (contexto === 'ocupar') {
-            if (estado === 'RESERVADA') mostrarModalReserva(nombreHab, fecha);
-            else if (estado === 'LIBRE') alert(`Seleccionada para ocupar: ${nombreHab}`);
-
+            if (estado === 'RESERVADA') {
+                // CASO 3.D: Ocupar habitación reservada -> MODAL
+                await mostrarModalReserva(nombreHab, fecha);
+            } else if (estado === 'LIBRE') {
+                // CASO NORMAL: Ocupar habitación libre
+                alert(`Seleccionada para ocupar: ${nombreHab} el ${fecha}`);
+                // Aquí podrías redirigir directo o marcar la celda visualmente
+            }
         } else if (contexto === 'reservar') {
-            // CAMBIO: Permitimos seleccionar visualmente CUALQUIERA
-            seleccionarColumna(nombreHab);
+            if (estado === 'LIBRE') {
+                // Lógica de reserva (selección de rango)
+                alert(`Seleccionada para inicio reserva: ${nombreHab}`);
+            } else {
+                mostrarError("No se puede reservar una habitación ocupada o ya reservada.", null);
+            }
         }
     }
 
-    function seleccionarColumna(nombreHab) {
-        const contexto = "[[${contexto}]]";
-        if (contexto !== 'reservar') return;
-
-        const celdas = document.querySelectorAll(`td[data-habitacion="${nombreHab}"]`);
-        // Verificamos si la primera ya está seleccionada para alternar
-        const marcar = !celdas[0].classList.contains('seleccionada');
-
-        celdas.forEach(celda => {
-            if (marcar) celda.classList.add('seleccionada');
-            else celda.classList.remove('seleccionada');
-        });
-
-        mostrarError(null);
-    }
-
-    // --- 4. Botón Acción Principal ---
-    btnAccion.addEventListener('click', () => {
-        const contexto = "[[${contexto}]]";
-
-        if (contexto === 'reservar') {
-            const celdasSeleccionadas = document.querySelectorAll('td.seleccionada');
-
-            if (celdasSeleccionadas.length === 0) {
-                mostrarError("Debe seleccionar al menos una habitación.", null);
-                return;
-            }
-
-            // --- VALIDACIÓN DE DISPONIBILIDAD AL APRETAR RESERVAR ---
-            let hayConflicto = false;
-            // Revisar si alguna celda seleccionada no es LIBRE
-            for (let celda of celdasSeleccionadas) {
-                if (celda.getAttribute('data-estado') !== 'LIBRE') {
-                    hayConflicto = true;
-                    break;
-                }
-            }
-
-            if (hayConflicto) {
-                // MOSTRAR MODAL DE ERROR
-                document.getElementById('availabilityModal').classList.add('active');
-                return;
-            }
-            // -------------------------------------------------------
-
-            const idsHabitaciones = [...new Set(Array.from(celdasSeleccionadas).map(td => td.dataset.habitacionId))];
-
-            sessionStorage.setItem('reservaData', JSON.stringify({
-                idsHabitaciones: idsHabitaciones.map(id => parseInt(id)),
-                fechaIngreso: inputDesde.value,
-                fechaEgreso: inputHasta.value
-            }));
-
-            window.location.href = '/reserva/confirmar';
-
-        } else {
-            alert("Acción para ocupar pendiente.");
-        }
-    });
-
-    // --- Modales y Utilidades ---
+    // --- 4. Lógica del Modal (Backend Call) ---
     async function mostrarModalReserva(nombre, fecha) {
         try {
             const res = await fetch(`/api/habitaciones/reserva-detalle?nombre=${nombre}&fecha=${fecha}`);
             if (!res.ok) throw new Error("Error obteniendo detalle");
+
             const detalle = await res.json();
+
+            // Rellenar datos
             document.getElementById('modalApellido').textContent = detalle.apellido;
             document.getElementById('modalNombre').textContent = detalle.nombre;
             document.getElementById('modalTelefono').textContent = detalle.telefono;
-            document.getElementById('modalReserva').classList.add('active');
+
+            // Guardar referencia temporal
+            seleccionPendiente = { nombre, fecha };
+
+            // Mostrar
+            modal.classList.remove('hidden');
         } catch (e) {
             console.error(e);
-            mostrarError("Error al obtener detalle reserva", null);
+            mostrarError("No se pudieron cargar los datos de la reserva.", null);
         }
     }
 
-    function cerrarModal(id) {
-        document.getElementById(id).classList.remove('active');
+    function cerrarModal() {
+        modal.classList.add('hidden');
+        seleccionPendiente = null;
     }
 
-    function formatoFecha(iso) { const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; }
+    // Botón "OCUPAR IGUAL" del Modal
+    document.getElementById('btnOcuparIgual').addEventListener('click', () => {
+        if (seleccionPendiente) {
+            // Aquí iría la redirección real al formulario de ocupación
+            alert(`Procesando ocupación forzada para ${seleccionPendiente.nombre}...`);
+            // window.location.href = ...
+            cerrarModal();
+        }
+    });
+
+    function formatoFecha(iso) {
+        const [y, m, d] = iso.split('-');
+        return `${d}/${m}/${y}`;
+    }
 
     function mostrarError(msg, elementToFocus) {
         if (msg) {
             errorText.textContent = msg;
             errorMsg.classList.remove('hidden');
-            if(elementToFocus) elementToFocus.focus();
+            if (elementToFocus) {
+                elementToFocus.focus();
+                elementToFocus.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                setTimeout(() => {
+                    elementToFocus.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                }, 3000);
+            }
         } else {
             errorMsg.classList.add('hidden');
         }
     }
 
     function limpiarTabla() {
-        document.getElementById('bodyRows').innerHTML = '<tr><td colspan="10" class="p-12 text-gray-400 italic text-center">Corrija los errores.</td></tr>';
+        document.getElementById('bodyRows').innerHTML = '<tr><td colspan="10" class="p-12 text-gray-400 italic text-center">Corrija los errores para buscar.</td></tr>';
         btnAccion.disabled = true;
     }
+
+    // Botón Acción Principal (RESERVAR/OCUPAR)
+    btnAccion.addEventListener('click', () => {
+        const contexto = "[[${contexto}]]";
+        // Esta lógica se activa si el usuario selecciona celdas y luego da click al botón grande
+        alert("Acción principal: " + contexto);
+    });
+
 </script>
 </body>
 </html>

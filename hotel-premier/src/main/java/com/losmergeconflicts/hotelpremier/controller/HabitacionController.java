@@ -2,11 +2,9 @@ package com.losmergeconflicts.hotelpremier.controller;
 
 import com.losmergeconflicts.hotelpremier.dto.DetalleReservaDTO;
 import com.losmergeconflicts.hotelpremier.dto.GrillaDisponibilidadDTO;
-import com.losmergeconflicts.hotelpremier.dto.HabitacionDTOResponse;
 import com.losmergeconflicts.hotelpremier.entity.TipoHabitacion;
 import com.losmergeconflicts.hotelpremier.service.GestorHabitaciones;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/habitaciones")
@@ -36,9 +33,24 @@ public class HabitacionController {
 
         log.info("REST: Solicitando estados. Desde: {}, Hasta: {}, Tipo: {}", desde, hasta, (tipo != null ? tipo : "TODAS"));
 
-        GrillaDisponibilidadDTO grilla = gestorHabitaciones.obtenerEstados(desde, hasta, tipo);
+        try {
+            if (desde == null) {
+                return ResponseEntity.badRequest().body("La fecha 'Desde' es obligatoria.");
+            }
+            if (hasta == null) {
+                return ResponseEntity.badRequest().body("La fecha 'Hasta' es obligatoria.");
+            }
 
-        return ResponseEntity.ok(grilla);
+            GrillaDisponibilidadDTO grilla = gestorHabitaciones.obtenerEstados(desde, hasta, tipo);
+            return ResponseEntity.ok(grilla);
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Error de validación: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error interno", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ocurrió un error interno en el servidor.");
+        }
     }
 
     @GetMapping("/reserva-detalle")
@@ -47,26 +59,6 @@ public class HabitacionController {
             @RequestParam("fecha") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
 
         return ResponseEntity.ok(gestorHabitaciones.obtenerDetalleReserva(nombre, fecha));
-    }
-
-    /**
-     * Listar habitaciones por IDs
-     * 
-     * @param idsHabitaciones
-     * @return ResponseEntity con la lista de habitaciones encontradas
-     */
-    @Operation(summary = "Listar habitaciones por IDs",
-                description = "Permite listar habitaciones filtradas por sus IDs.",
-                responses = {
-                    @ApiResponse(responseCode = "200", description = "Habitaciones listadas correctamente"),
-                    @ApiResponse(responseCode = "400", description = "Error de validación en los datos"),
-                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-                })
-    @GetMapping("/listar-por-ids")
-    public ResponseEntity<List<HabitacionDTOResponse>> listarHabitacionesPorID(
-            @RequestParam("ids") List<Long> idsHabitaciones) {
-        List<HabitacionDTOResponse> habitaciones = gestorHabitaciones.listarHabitacionesPorID(idsHabitaciones);
-        return ResponseEntity.ok(habitaciones);
     }
 }
 

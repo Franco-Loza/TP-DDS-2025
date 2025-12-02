@@ -238,38 +238,4 @@ public class UIController {
         return "estado-habitaciones";
     }
 
-    /**
-     * Muestra la vista de confirmación de reserva.
-     *
-     * @return nombre de la vista de confirmación de reserva
-     */
-    @Operation(summary = "Mostrar confirmación de reserva",
-            description = "Renderiza la página HTML para confirmar los datos de la reserva antes de completarla.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Vista mostrada"),
-                    @ApiResponse(responseCode = "401", description = "No autenticado")
-            })
-    @GetMapping("/reserva/confirmar")
-    public String confirmarReserva() {
-        log.info("UI: Confirmación de Reserva");
-        return "confirmar-reserva";
-    }
-
-    /**
-     * Muestra la vista para ingresar los datos del huésped de la reserva.
-     *
-     * @return nombre de la vista de datos del huésped
-     */
-    @Operation(summary = "Mostrar formulario de datos del huésped",
-            description = "Renderiza la página HTML para completar los datos del huésped responsable de la reserva.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Vista mostrada"),
-                    @ApiResponse(responseCode = "401", description = "No autenticado")
-            })
-    @GetMapping("/reserva/datos-huesped")
-    public String datosHuespedReserva() {
-        log.info("UI: Datos de Huésped para Reserva");
-        return "reserva-datos-huesped";
-    }
-
 }
