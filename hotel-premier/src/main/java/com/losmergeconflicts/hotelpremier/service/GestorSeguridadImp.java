@@ -103,4 +103,24 @@ public class GestorSeguridadImp implements GestorSeguridad {
     public boolean existeUsername(String username) {
         return conserjeDAO.existsByUsername(username);
     }
+
+    @Override
+    public ConserjeDTOResponse autenticarConserje(String username, String password) {
+
+        Conserje conserje = conserjeDAO.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        if (!passwordEncoder.matches(password, conserje.getPassword())) {
+            throw new IllegalArgumentException("Contraseña incorrecta");
+        }
+
+        return new ConserjeDTOResponse(
+                conserje.getId(),
+                conserje.getUsername(),
+                "CONSERJE", // O conserje.getRole() si tienes roles en la entidad
+                (conserje.getCreatedAt() != null) ? conserje.getCreatedAt().toString() : null,
+                (conserje.getUpdatedAt() != null) ? conserje.getUpdatedAt().toString() : null
+        );
+    }
+
 }

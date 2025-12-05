@@ -26,4 +26,7 @@ public interface GestorSeguridad {
      * @return true si el username existe, false si no
      */
     boolean existeUsername(String username);
+
+    ConserjeDTOResponse autenticarConserje(String username, String password);
 }
+

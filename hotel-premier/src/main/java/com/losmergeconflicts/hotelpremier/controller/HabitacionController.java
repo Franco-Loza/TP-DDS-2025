@@ -21,6 +21,7 @@ import java.util.List;
 @RequestMapping("/api/habitaciones")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3000")
 @Tag(name = "Gestión de Habitaciones", description = "Endpoints del GestorHabitaciones")
 public class HabitacionController {
 
@@ -66,5 +67,10 @@ public class HabitacionController {
             @RequestParam("ids") List<Long> idsHabitaciones) {
         List<HabitacionDTOResponse> habitaciones = gestorHabitaciones.listarHabitacionesPorID(idsHabitaciones);
         return ResponseEntity.ok(habitaciones);
+    }
+
+    @GetMapping("/tipos")
+    public ResponseEntity<TipoHabitacion[]> obtenerTiposHabitacion() {
+        return ResponseEntity.ok(TipoHabitacion.values());
     }
 }

@@ -9,97 +9,59 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * Controlador para gestionar peticiones HTTP de autenticación y registro.
- * 
- * Este controlador maneja la lógica de negocio de autenticación.
- * Para las vistas/interfaces, ver UIController.
- * 
- * @Controller: Indica que es un controlador MVC (retorna vistas)
- * @Slf4j: Genera logger automático para la clase
- */
-@Controller
+import java.util.Collections;
+
+@RestController
+@RequestMapping("/api/auth")
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3000")
 @Tag(name = "Autenticación", description = "Endpoints para registro y autenticación de usuarios")
 public class SeguridadController {
 
     private final GestorSeguridad gestorSeguridad;
 
-    /**
-     * Constructor con inyección de dependencias.
-     * 
-     * @param gestorSeguridad servicio que contiene la lógica de autenticación
-     */
     @Autowired
     public SeguridadController(GestorSeguridad gestorSeguridad) {
         this.gestorSeguridad = gestorSeguridad;
     }
 
-    /**
-     * Procesa el registro de un nuevo conserje.
-     * 
-     * @param request DTO con los datos validados del formulario
-     * @param bindingResult resultados de validación de Spring
-     * @param redirectAttributes para pasar mensajes flash a la redirección
-     * @return redirección al login si éxito, o al registro si error
-     */
-    @Operation(summary = "Registrar nuevo usuario",
-                description = "Procesa el formulario de registro, valida los datos y crea un nuevo usuario en el sistema.",
-                responses = {
-                    @ApiResponse(responseCode = "302", description = "Redirección al login tras registro exitoso"),
-                    @ApiResponse(responseCode = "400", description = "Error de validación (usuario duplicado, contraseña inválida)"),
-                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
-                })
+    @Operation(summary = "Registrar nuevo usuario")
     @PostMapping("/registro")
-    public String registrarConserje(
-            @Valid @ModelAttribute ConserjeDTORequest request,
-            BindingResult bindingResult,
-            RedirectAttributes redirectAttributes) {
-        
-        // Verificar si hay errores de validación
-        if (bindingResult.hasErrors()) {
-            log.warn("Errores de validación en registro: {}", bindingResult.getAllErrors());
-            var fieldError = bindingResult.getFieldError();
-            String errorMessage = (fieldError != null && fieldError.getDefaultMessage() != null)
-                    ? fieldError.getDefaultMessage() 
-                    : "Datos inválidos";
-            redirectAttributes.addFlashAttribute("error", errorMessage);
-            return "redirect:/registro";
-        }
-        
+    public ResponseEntity<?> registrarConserje(@Valid @RequestBody ConserjeDTORequest request) {
         try {
-            log.debug("Procesando petición de registro para: {}", request.username());
-            
-            // Delegar al servicio (validaciones y mapeo dentro del servicio)
+            log.debug("API: Registro para: {}", request.username());
             ConserjeDTOResponse response = gestorSeguridad.registrarConserje(request);
-            
-            // Mensaje de éxito
-            redirectAttributes.addFlashAttribute("success", 
-                "Registro exitoso. Por favor, inicia sesión.");
-            
-            log.info("Usuario registrado exitosamente: {}", response.username());
-            
-            return "redirect:/login";
-            
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
         } catch (IllegalArgumentException e) {
-            // Errores de validación (username duplicado, etc.)
-            log.warn("Error de validación en registro: {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/registro";
-            
+            log.warn("API: Error validación: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", e.getMessage()));
+
         } catch (Exception e) {
-            // Errores inesperados
-            log.error("Error inesperado al procesar registro", e);
-            redirectAttributes.addFlashAttribute("error", 
-                "Error al procesar el registro. Intente nuevamente.");
-            return "redirect:/registro";
+            log.error("API: Error inesperado", e);
+            return ResponseEntity.internalServerError()
+                    .body(Collections.singletonMap("message", "Error interno del servidor"));
         }
     }
 
+    @Operation(summary = "Iniciar Sesión")
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody ConserjeDTORequest request) {
+        try {
+            ConserjeDTOResponse usuario = gestorSeguridad.autenticarConserje(request.username(), request.password());
+            return ResponseEntity.ok(usuario);
+
+        } catch (Exception e) {
+            log.warn("Login fallido: {}", request.username());
+            // AQUÍ TAMBIÉN: Devolvemos JSON
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.singletonMap("message", "Usuario o contraseña incorrectos"));
+        }
+    }
 }

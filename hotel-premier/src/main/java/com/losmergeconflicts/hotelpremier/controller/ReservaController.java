@@ -20,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/reservas")
 @Slf4j
+@CrossOrigin(origins = "http://localhost:3000")
 @Tag(name = "Gestión de Reservas", description = "Endpoints para gestión de reservas")
 public class ReservaController {
 
